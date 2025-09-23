@@ -87,6 +87,38 @@ module.exports = {
 };
 ```
 
+### Pour activer la fonctionnalité de récupération du rôle utilisateur via le double appel dans Strapi, vous devez configurer les permissions de chaque rôle dans les paramètres du plugin users-permissions.
+
+1. Activer les permissions pour les rôles
+Naviguez vers le panneau d'administration de Strapi : Settings -> Users & Permissions Plugin -> Roles.
+
+Sélectionnez le rôle concerné (par exemple, "Authenticated").
+
+Dans la section Users & Permissions, activez les permissions suivantes :
+
+User: Cochez la case find. Cette action permet à votre application de rechercher et d'accéder aux informations de l'utilisateur.
+
+User: Cochez la case me. Cette permission est essentielle, car elle autorise l'utilisateur à récupérer ses propres informations de profil (y compris le rôle) après s'être authentifié.
+
+User: Cochez la case find pour l'attribut role. Sans cela, même si le champ me est autorisé, le rôle ne sera pas renvoyé dans la réponse de l'API.
+
+2. Double appel API
+Strapi ne renvoie pas le rôle de l'utilisateur directement après une connexion réussie. Pour obtenir le rôle, votre application doit effectuer deux appels distincts :
+
+Appel de connexion (POST /api/auth/local)
+
+Le premier appel permet de s'authentifier et de recevoir un JWT (JSON Web Token).
+
+Ce JWT est nécessaire pour authentifier toutes les requêtes subséquentes.
+
+Appel de profil (GET /api/users/me?populate=role)
+
+Le second appel utilise le JWT pour récupérer les informations de l'utilisateur.
+
+En ajoutant le paramètre ?populate=role, vous demandez à Strapi d'inclure les détails du rôle dans la réponse.
+
+En suivant ces étapes, vous vous assurez que le rôle de l'utilisateur est correctement récupéré et que les permissions nécessaires sont en place pour éviter les erreurs d'accès refusé (ForbiddenError).
+
 ### 2. **Lancer le BFF (Backend-for-Frontend)**
 
 Le BFF centralise les appels API entre le frontend Angular et le backend Strapi. Voici comment démarrer le serveur BFF.
