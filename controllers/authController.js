@@ -4,6 +4,8 @@ const axios = require('axios');
 const username = 'TON_USERNAME';
 const password = 'TON_PASSWORD';
 
+const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
+
 // Inscription
 exports.register = async (req, res) => {
   const { username, email, password } = req.body;
@@ -66,7 +68,7 @@ exports.login = async (req, res) => {
      // --- Étape 3: Appeller web service business user by node ID ---
      const businessUserResponse = await axios.get(`${process.env.WS_METIER_URL}/alfresco/s/ged/objet-by-id/09779ec1-ed1e-47c1-917b-3c9f777a7f20`, {
           headers: {
-              Authorization: `Bearer ${jwt}`,
+              Authorization: `Basic ${basicAuth}`, // <- ici Basic Auth
           },
       });
 
