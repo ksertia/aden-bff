@@ -1,5 +1,9 @@
 const axios = require('axios');
 
+
+const username = 'TON_USERNAME';
+const password = 'TON_PASSWORD';
+
 // Inscription
 exports.register = async (req, res) => {
   const { username, email, password } = req.body;
@@ -51,7 +55,7 @@ exports.login = async (req, res) => {
     const { jwt, user } = strapiResponse.data;
 
      // --- Étape 2: Appel à Strapi pour récupérer l'utilisateur avec le rôle (/users/me) ---
-     const userResponse = await axios.get(`${process.env.STRAPI_URL}/users/me?populate=role`, {
+     const userResponse = await axios.get(`${process.env.STRAPI_URL}/api/users/me?populate=role`, {
           headers: {
               Authorization: `Bearer ${jwt}`,
           },
@@ -59,11 +63,23 @@ exports.login = async (req, res) => {
 
      const userWithRole = userResponse.data;
 
-      // --- Étape 3: Combiner et renvoyer la réponse au frontend ---
+     // --- Étape 3: Appeller web service business user by node ID ---
+     const businessUserResponse = await axios.get(`${process.env.WS_METIER_URL}/alfresco/s/ged/objet-by-id/09779ec1-ed1e-47c1-917b-3c9f777a7f20`, {
+          headers: {
+              Authorization: `Bearer ${jwt}`,
+          },
+      });
+
+     const businessUser = businessUserResponse.data;
+
+    //  http://54.38.55.19:8181/alfresco/s/ged/objet-by-id/09779ec1-ed1e-47c1-917b-3c9f777a7f20'
+
+      // --- Étape 4: Combiner et renvoyer la réponse au frontend ---
         // Le frontend reçoit une réponse complète en une seule fois.
    res.status(200).json({
           jwt,
           user: userWithRole,
+          businessUser
       });  
 
   } catch (error) {
