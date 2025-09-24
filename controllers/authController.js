@@ -87,9 +87,9 @@ exports.login = async (req, res) => {
     const strapiError = error.response?.data?.error || { status: 500, name: 'InternalServerError', message: 'An unknown error occurred' };
     res.status(strapiError.status).json({
         error: {
-            status: strapiError.status,
-            name: strapiError.name,
-            message: strapiError.message,
+          status: strapiError.status,
+          name: strapiError.name,
+          message: strapiError.message,
         },
     });
   }
