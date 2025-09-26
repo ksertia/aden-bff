@@ -1,10 +1,18 @@
 const axios = require('axios');
 
-
+// Informations d'authentification pour WS Métier
 const username = 'admin';
 const password = 'admin';
-
 const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
+
+//const basicAuthHeader = `Basic ${basicAuth}`;
+const config = {
+  headers: {
+    'Authorization': `Basic ${basicAuth}`,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
+};
 
 // Inscription
 exports.register = async (req, res) => {
@@ -12,8 +20,8 @@ exports.register = async (req, res) => {
 
   try {
     const strapiResponse = await axios.post(`${process.env.STRAPI_URL}/api/auth/local/register`, {
-      username, 
-      email, 
+      username,
+      email,
       password
     });
 
@@ -56,42 +64,42 @@ exports.login = async (req, res) => {
 
     const { jwt, user } = strapiResponse.data;
 
-     // --- Étape 2: Appel à Strapi pour récupérer l'utilisateur avec le rôle (/users/me) ---
-     const userResponse = await axios.get(`${process.env.STRAPI_URL}/api/users/me?populate=role`, {
-          headers: {
-              Authorization: `Bearer ${jwt}`,
-          },
-      });
-
-     const userWithRole = userResponse.data;
-
-     // --- Étape 3: Appeller web service business user by node ID ---
-     const businessUserResponse = await axios.get(`${process.env.WS_METIER_URL}/alfresco/s/ged/objet-by-id/09779ec1-ed1e-47c1-917b-3c9f777a7f20`, {
-          headers: {
-              Authorization: `Basic ${basicAuth}`, 
-          },
-      });
-
-     const businessUser = businessUserResponse.data;
-
+    // --- Étape 2: Appel à Strapi pour récupérer l'utilisateur avec le rôle (/users/me) ---
+    const userResponse = await axios.get(`${process.env.STRAPI_URL}/api/users/me?populate=role`, {
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+      },
+    });
   
-      // --- Étape 4: Combiner et renvoyer la réponse au frontend ---
-        // Le frontend reçoit une réponse complète en une seule fois.
-   res.status(200).json({
-          jwt,
-          user: userWithRole,
-          businessUser
-      });  
+
+    const userWithRole = userResponse.data;
+
+    let businessUser = null;
+    // --- Étape 3: Vérification du `nodeId` dans Strapi et appel à WS Métier ---
+    if (userWithRole.nodeId) {
+      // Appel à l'API externe avec la configuration d'authentification
+      const businessUserResponse = await axios.get(`${process.env.WS_METIER_URL}/alfresco/s/ged/objet-by-id/${userWithRole.nodeId}`, config);
+      businessUser = businessUserResponse.data?.data?.map;
+    }
+
+    // Réponse complète avec les données mises à jour
+    return res.status(200).json({
+      jwt,
+      user: userWithRole,
+      businessUser, // Les données métier de WS Métier
+    });
 
   } catch (error) {
-    // Gérer les erreurs (ex: mauvaises credentials, permissions insuffisantes)
+    // Gérer les erreurs (ex: mauvaises credentials, permissions insuffisantes, erreurs WS Métier)
+    console.error('Erreur lors de la connexion ou de la récupération des données métier:', error.message);
+
     const strapiError = error.response?.data?.error || { status: 500, name: 'InternalServerError', message: 'An unknown error occurred' };
     res.status(strapiError.status).json({
-        error: {
-          status: strapiError.status,
-          name: strapiError.name,
-          message: strapiError.message,
-        },
+      error: {
+        status: strapiError.status,
+        name: strapiError.name,
+        message: strapiError.message,
+      },
     });
   }
 };
