@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
+const debiteurRoutes = require('./routes/debiteurRoutes');
 
 dotenv.config();
 const app = express();
@@ -16,6 +17,9 @@ app.get('/health', (req, res) => res.json({ status: 'OK', message: 'BFF is runni
 // Auth routes
 app.use('/auth', authRoutes);
 
+// Debiteur routes
+app.use('/api', debiteurRoutes);
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -23,5 +27,5 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Server running on port ${port}`));
