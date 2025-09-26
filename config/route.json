@@ -1,0 +1,38 @@
+{
+  "routes": [
+
+    {
+      "method": "GET",
+      "path": "/admin/users",
+      "handler": "admin.getAllUsers",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/admin/users",
+      "handler": "admin.addUser",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/admin/users/:id",
+      "handler": "admin.updateUser",
+      "config": {
+        "policies": []
+      }
+    },
+
+    {
+      "method": "DELETE",
+      "path": "/admin/users/:id",
+      "handler": "admin.deleteUser",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}
