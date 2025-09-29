@@ -10,7 +10,7 @@ const config = {
   headers: {
     'Authorization': `Basic ${basicAuth}`,
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    'Accept': 'application/json',
   }
 };
 

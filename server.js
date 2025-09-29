@@ -3,6 +3,8 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const debiteurRoutes = require('./routes/debiteurRoutes');
+const partenaireRoutes = require('./routes/partenaireRoutes');
+
 
 dotenv.config();
 const app = express();
@@ -19,6 +21,9 @@ app.use('/auth', authRoutes);
 
 // Debiteur routes
 app.use('/api', debiteurRoutes);
+
+// Partenaire routes
+app.use('/api', partenaireRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
