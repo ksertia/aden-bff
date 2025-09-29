@@ -40,3 +40,47 @@ exports.getAvocats = async (req, res) => {
     return res.status(500).json({ error: 'Une erreur est survenue', details: error.message });
   }
 };
+
+
+//___________
+// Récupérer un débiteur par son NodeID
+exports.getAvocatById = async (req, res) => {
+  const { sitename, avocatId } = req.params;  // Récupérer le sitename et avocatId à partir des paramètres de l'URL
+
+  // Vérification que le sitename et avocatId sont présents
+  if (!sitename || !avocatId) {
+    return res.status(400).json({ error: 'Les paramètres sitename et debiteurId sont requis' });
+  }
+
+  const baseUrl = 'http://54.38.55.19:8181/alfresco/s/ged/search-objets';  // Base URL de l'API
+
+  try {
+    // Construire l'URL de l'API avec le sitename et avocatId (ex: "portail-recouvrement" et avocatId)
+    const url = `${baseUrl}/${sitename}/debiteur/${avocatId}`;
+
+    // Effectuer la requête GET avec Axios, en ajoutant les headers nécessaires
+    const response = await axios.get(url, config);
+
+    // Vérifier que la réponse a un status 200
+    if (response.status === 200) {
+      const avocat = response.data;  // Les données retournées par l'API
+      return res.json(avocat);  // Retourner les données au client
+    } else {
+      // Gestion des réponses non-200 avec un message d'erreur détaillé
+      return res.status(response.status).json({ error: 'Erreur de récupération du avocat', details: response.statusText });
+    }
+  } catch (error) {
+    // Gestion des erreurs avec message spécifique
+    console.error('Erreur lors de la récupération du avocat:', error.message);
+    if (error.response) {
+      // Si l'erreur provient de la réponse de l'API
+      return res.status(error.response.status).json({ error: 'Erreur dans la réponse de l\'API', details: error.response.data });
+    } else if (error.request) {
+      // Si la requête a été faite mais qu'aucune réponse n'a été reçue
+      return res.status(500).json({ error: 'Pas de réponse de l\'API', details: error.message });
+    } else {
+      // Autres erreurs
+      return res.status(500).json({ error: 'Une erreur est survenue', details: error.message });
+    }
+  }
+};

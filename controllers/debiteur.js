@@ -21,7 +21,7 @@ exports.getDebiteurs = async (req, res) => {
 
   try {
     // Construire l'URL de l'API avec le sitename (ex: "portail-recouvrement")
-    const url = `${baseUrl}/${sitename}/debiteur?maxResults=50`;
+    const url = `${baseUrl}/${sitename}/debiteur`;
 
     // Effectuer la requête GET avec Axios, en ajoutant les headers nécessaires
     const response = await axios.get(url, config);
@@ -42,7 +42,7 @@ exports.getDebiteurs = async (req, res) => {
 };
 
 
-// Récupérer un débiteur par son NodeID
+// Récupérer un débiteur par son ID
 exports.getDebiteurById = async (req, res) => {
   const { sitename, debiteurId } = req.params;  // Récupérer le sitename et debiteurId à partir des paramètres de l'URL
 

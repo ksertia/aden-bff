@@ -5,5 +5,6 @@ const avocatController = require('../controllers/avocat');  // Importer le contr
 
 // Route pour récupérer les débiteurs
 router.get('/avocats/:sitename', avocatController.getAvocats);
+router.get('/avocats/:sitename/:avocatId', avocatController.getAvocats);
 
 module.exports = router;
