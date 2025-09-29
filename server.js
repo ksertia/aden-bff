@@ -8,6 +8,8 @@ const huissierRoutes = require('./routes/huissierRoutes');
 const creancierRoutes = require('./routes/creancierRoutes');
 const avocatRoutes = require('./routes/avocatRoutes');
 const cedantRoutes = require('./routes/cedantRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+
 
 
 
@@ -41,6 +43,8 @@ app.use('/api', avocatRoutes);
 
 // Cedants routes
 app.use('/api', cedantRoutes);
+// admin routes
+app.use('/api', adminRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

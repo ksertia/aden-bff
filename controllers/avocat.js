@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-// Informations d'authentification pour l'API de récupération des débiteurs
+// Informations d'authentification pour l'API de récupération des avocats
 const username = 'admin';  // Exemple : admin
 const password = 'admin';  // Exemple : admin
 const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
@@ -14,7 +14,7 @@ const config = {
   }
 };
 
-// Récupérer les débiteurs
+// Récupérer les avocats
 exports.getAvocats = async (req, res) => {
   const { sitename } = req.params;  // Récupérer le sitename à partir des paramètres de l'URL
   const baseUrl = 'http://54.38.55.19:8181/alfresco/s/ged/search-objets';  // Base URL de l'API
@@ -43,7 +43,7 @@ exports.getAvocats = async (req, res) => {
 
 
 //___________
-// Récupérer un débiteur par son NodeID
+// Récupérer un avocats par son NodeID
 exports.getAvocatById = async (req, res) => {
   const { sitename, avocatId } = req.params;  // Récupérer le sitename et avocatId à partir des paramètres de l'URL
 
