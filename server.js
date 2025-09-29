@@ -4,6 +4,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const debiteurRoutes = require('./routes/debiteurRoutes');
 const partenaireRoutes = require('./routes/partenaireRoutes');
+const huissierRoutes = require('./routes/huissierRoutes');
 
 
 dotenv.config();
@@ -24,6 +25,9 @@ app.use('/api', debiteurRoutes);
 
 // Partenaire routes
 app.use('/api', partenaireRoutes);
+
+// Huissier routes
+app.use('/api', huissierRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
