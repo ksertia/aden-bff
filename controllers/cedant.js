@@ -21,7 +21,7 @@ exports.getCedants = async (req, res) => {
 
   try {
     // Construire l'URL de l'API avec le sitename (ex: "portail-recouvrement")
-    const url = `${baseUrl}/${sitename}/cedant?maxResults=50`;
+    const url = `${baseUrl}/${sitename}/cedant`;
 
     // Effectuer la requête GET avec Axios, en ajoutant les headers nécessaires
     const response = await axios.get(url, config);
