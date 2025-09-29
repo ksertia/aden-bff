@@ -5,6 +5,8 @@ const authRoutes = require('./routes/authRoutes');
 const debiteurRoutes = require('./routes/debiteurRoutes');
 const partenaireRoutes = require('./routes/partenaireRoutes');
 const huissierRoutes = require('./routes/huissierRoutes');
+const creancierRoutes = require('./routes/creancierRoutes');
+
 
 
 dotenv.config();
@@ -28,6 +30,9 @@ app.use('/api', partenaireRoutes);
 
 // Huissier routes
 app.use('/api', huissierRoutes);
+
+// Créancier routes
+app.use('/api', creancierRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
