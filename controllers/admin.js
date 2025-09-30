@@ -46,13 +46,21 @@ exports.getAllUsers = async (req, res) => {
     const partenaires = await fetchUserData(sitename, 'partenaire');
 
     // Retourner toutes les données dans un seul objet
-    return res.json({
-      debiteurs,
-      huissiers,
-      avocats,
-      creanciers,
-      cedants,
-      partenaires,
+    // return res.json({
+    //   debiteurs,
+    //   huissiers,
+    //   avocats,
+    //   creanciers,
+    //   cedants,
+    //   partenaires,
+    // });
+     return res.json({
+      debiteurs: debiteurs.data,
+      huissiers: huissiers.data,
+      avocats: avocats.data,
+      creanciers: creanciers.data,
+      cedants: cedants.data,
+      partenaires: partenaires.data,
     });
   } catch (error) {
     return res.status(500).json({ error: 'Une erreur est survenue lors de la récupération des utilisateurs', details: error.message });
