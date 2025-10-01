@@ -1,6 +1,10 @@
 // test-smtp.js
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 const emailService = require('../services/emailService');
+
+
+console.log('SMTP_HOST:', process.env.SMTP_HOST);  // Devrait afficher 'smtp.gmail.com'
+console.log('SMTP_PORT:', process.env.SMTP_PORT);  // Devrait afficher '587'
 
 async function testSMTP() {
   console.log('🧪 Test de configuration SMTP...\n');
