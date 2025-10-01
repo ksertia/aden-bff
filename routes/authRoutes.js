@@ -5,11 +5,20 @@ const roleMiddleware = require('../middlewares/roleMiddleware');
 
 const router = express.Router();
 
-// Inscription et login
+// ======================= AUTHENTIFICATION =======================
+
+// Inscription
 router.post('/register', authController.register);
+
+// Connexion
 router.post('/login', authController.login);
 
-// Exemple route protégée
+// Réinitialisation du mot de passe (Reset Password via Strapi)
+// POST /auth/reset-password
+router.post('/reset-password', authController.resetPassword);
+
+// ======================= EXEMPLES DE ROUTES PROTÉGÉES =======================
+// Exemple route protégée accessible uniquement aux rôles Créancier et Cédant
 router.get('/creances', authMiddleware, roleMiddleware(['Créancier', 'Cédant']), (req, res) => {
   res.json({ message: 'Accès aux créances autorisé', user: req.user });
 });

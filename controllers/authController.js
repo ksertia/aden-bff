@@ -14,15 +14,16 @@ const config = {
   }
 };
 
-// Inscription
+// ======================= INSCRIPTION =======================
 exports.register = async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, nodeId } = req.body; // ajout nodeId ici pour cohérence
 
   try {
     const strapiResponse = await axios.post(`${process.env.STRAPI_URL}/api/auth/local/register`, {
       username,
       email,
-      password
+      password,
+      nodeId
     });
 
     const { jwt, user } = strapiResponse.data;
@@ -33,6 +34,7 @@ exports.register = async (req, res) => {
         id: user.id,
         email: user.email,
         username: user.username,
+        nodeId: user.nodeId,
         roles: user.roles
       }
     });
@@ -43,7 +45,7 @@ exports.register = async (req, res) => {
   }
 };
 
-// Connexion
+// ======================= CONNEXION =======================
 /*
 It's a known behavior in Strapi v4 that the /api/auth/local endpoint does not automatically return the user's role in its response. 
 This is because the role field is not populated by default for security and performance reasons.
@@ -62,7 +64,7 @@ exports.login = async (req, res) => {
       password
     });
 
-    const { jwt, user } = strapiResponse.data;
+    const { jwt } = strapiResponse.data;
 
     // --- Étape 2: Appel à Strapi pour récupérer l'utilisateur avec le rôle (/users/me) ---
     const userResponse = await axios.get(`${process.env.STRAPI_URL}/api/users/me?populate=role`, {
@@ -70,7 +72,6 @@ exports.login = async (req, res) => {
         Authorization: `Bearer ${jwt}`,
       },
     });
-  
 
     const userWithRole = userResponse.data;
 
@@ -100,6 +101,40 @@ exports.login = async (req, res) => {
         name: strapiError.name,
         message: strapiError.message,
       },
+    });
+  }
+};
+
+// ======================= RESET PASSWORD =======================
+/**
+ * Reset Password - délègue la requête à Strapi
+ * Strapi attend : { code, password, passwordConfirmation }
+ */
+exports.resetPassword = async (req, res) => {
+  try {
+    const { code, password, passwordConfirmation } = req.body;
+
+    // Vérification basique
+    if (!code || !password || !passwordConfirmation) {
+      return res.status(400).json({ message: "Tous les champs sont requis : code, password, passwordConfirmation" });
+    }
+
+    // Appel à Strapi
+    const response = await axios.post(
+      `${process.env.STRAPI_URL}/api/auth/reset-password`,
+      { code, password, passwordConfirmation },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    return res.status(200).json({
+      message: "Mot de passe réinitialisé avec succès",
+      data: response.data
+    });
+  } catch (error) {
+    console.error("Erreur reset-password :", error.response?.data || error.message);
+    return res.status(error.response?.status || 500).json({
+      message: "Erreur lors de la réinitialisation du mot de passe",
+      error: error.response?.data || error.message
     });
   }
 };
