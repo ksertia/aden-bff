@@ -14,12 +14,11 @@ const config = {
 };
 
 // Base URL commune pour l'API
-const baseUrl = 'http://54.38.55.19:8181/alfresco/s/ged/search-objets';
 
 // Fonction pour récupérer les données d'un utilisateur spécifique
 const fetchUserData = async (sitename, userType) => {
   try {
-    const url = `${baseUrl}/${sitename}/${userType}`;
+    const url = `${process.env.baseUrl}/${sitename}/${userType}`;
     const response = await axios.get(url, config);
     return response.data;
   } catch (error) {
@@ -45,15 +44,6 @@ exports.getAllUsers = async (req, res) => {
     const cedants = await fetchUserData(sitename, 'cedant');
     const partenaires = await fetchUserData(sitename, 'partenaire');
 
-    // Retourner toutes les données dans un seul objet
-    // return res.json({
-    //   debiteurs,
-    //   huissiers,
-    //   avocats,
-    //   creanciers,
-    //   cedants,
-    //   partenaires,
-    // });
      return res.json({
       debiteurs: debiteurs.data,
       huissiers: huissiers.data,

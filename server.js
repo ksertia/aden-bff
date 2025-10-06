@@ -9,6 +9,7 @@ const creancierRoutes = require('./routes/creancierRoutes');
 const avocatRoutes = require('./routes/avocatRoutes');
 const cedantRoutes = require('./routes/cedantRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const dossierRoutes = require('./routes/dossierRoutes');
 
 
 
@@ -45,6 +46,10 @@ app.use('/api', avocatRoutes);
 app.use('/api', cedantRoutes);
 // admin routes
 app.use('/api', adminRoutes);
+
+// dossier routes
+app.use('/api', dossierRoutes);
+
 
 // Global error handler
 app.use((err, req, res, next) => {

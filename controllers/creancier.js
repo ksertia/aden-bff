@@ -46,7 +46,7 @@ exports.getCreances = async (req, res) => {
   const { sitename } = req.params;  // Récupérer le sitename à partir des paramètres de l'URL
   const { typeCreance, statutCreance, maxResults } = req.query;  // Récupérer les paramètres de la requête (query string)
 
-  const baseUrl = 'http://54.38.55.19:8181/alfresco/s/ged/search-objets';  // Base URL de l'API
+  // const baseUrl = 'http://54.38.55.19:8181/alfresco/s/ged/search-objets';  // Base URL de l'API
 
   try {
     // Construire les paramètres de la requête
@@ -60,7 +60,7 @@ exports.getCreances = async (req, res) => {
 
     // Joindre les paramètres à l'URL
     const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
-    const url = `${baseUrl}/${sitename}/creance${queryString}`;
+    const url = `${process.env.baseUrl}/${sitename}/creance${queryString}`;
 
     // Log de l'URL finale avant exécution pour vérifier la construction correcte de l'URL
     console.log(url);
