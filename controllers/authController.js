@@ -1,5 +1,4 @@
 const axios = require('axios');
-const CreationEmailService = require('../services/emailCreationCompteStrapi');
 
 // Informations d'authentification pour WS Métier
 const username = 'admin';
@@ -30,13 +29,13 @@ exports.register = async (req, res) => {
 
     const { jwt, user } = strapiResponse.data;
 
-    // --- Envoyer un email à l'utilisateur avec le mot de passe temporaire ---
-    try {
-      await CreationEmailService.sendWelcomeEmail(email, username, password);
-      console.log(`Email de bienvenue envoyé à ${email}`);
-    } catch (mailError) {
-      console.error('Erreur envoi email:', mailError);
-    }
+    // // --- Envoyer un email à l'utilisateur avec le mot de passe temporaire ---
+    // try {
+    //   await CreationEmailService.sendWelcomeEmail(email, username, password);
+    //   console.log(`Email de bienvenue envoyé à ${email}`);
+    // } catch (mailError) {
+    //   console.error('Erreur envoi email:', mailError);
+    // }
 
     res.json({
       jwt,
