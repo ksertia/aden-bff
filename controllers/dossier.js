@@ -29,8 +29,8 @@ exports.getDossiers = async (req, res) => {
     if (numeroDossier) queryParams.push(`numeroDossier=${numeroDossier}`);
     if (debiteurNodeId) queryParams.push(`debiteurNodeId=${debiteurNodeId}`);
     if (cedantNodeId) queryParams.push(`cedantNodeId=${cedantNodeId}`);
-    if (avocatNodeId) queryParams.push(`debiteurNodeId=${avocatNodeId}`);
-    if (partenaireNodeId) queryParams.push(`debiteurNodeId=${debiteurNodeId}`);
+    if (avocatNodeId) queryParams.push(`avocatNodeId=${avocatNodeId}`);
+    if (partenaireNodeId) queryParams.push(`partenaireNodeId=${partenaireNodeId}`);
     
 
     // Joindre les paramètres à l'URL
@@ -38,7 +38,7 @@ exports.getDossiers = async (req, res) => {
     const url = `${process.env.baseUrl}/${sitename}/dossier${queryString}`;
 
     // Log de l'URL finale avant exécution pour vérifier la construction correcte de l'URL
-    console.log(url);
+    console.log('URL appelée :',url);
 
     // Effectuer la requête GET avec Axios et les headers nécessaires
     const response = await axios.get(url, config);
