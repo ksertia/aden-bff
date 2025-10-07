@@ -15,6 +15,10 @@ router.post('/register', authController.register);
 // POST /auth/login
 router.post('/login', authController.login);
 
+router.post('/register-from-ws', authController.registerFromWS);
+
+
+
 // Demande de réinitialisation de mot de passe (envoie email Strapi)
 // POST /auth/forgot-password
 router.post('/forgot-password', authController.forgotPassword);

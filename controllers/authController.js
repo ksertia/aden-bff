@@ -1,51 +1,73 @@
 const axios = require('axios');
 
-// Informations d'authentification pour WS Métier
+// =======================================================
+//  Informations d'authentification pour WS Métier (si besoin plus tard)
+// =======================================================
 const username = 'admin';
 const password = 'admin';
 const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
-// ======================= INSCRIPTION =======================
-exports.register = async (req, res) => {
-  const { username, email, firstname, lastname, nodeId, role } = req.body;
 
-  // Génère un mot de passe temporaire sécurisé
-  const password = Math.random().toString(36).slice(-8);
+// =======================================================
+// ======================= INSCRIPTION ====================
+// =======================================================
+exports.register = async (req, res) => {
+  const { username, email, firstname, lastname, role } = req.body;
+
+  //  nodeId NE DOIT PAS venir du formulaire.
+  // Il est soit généré automatiquement, soit récupéré plus tard via le WS Métier.
+  const nodeId = req.body.nodeId || null;
+
+  //  Génération d’un mot de passe temporaire aléatoire et sécurisé
+  const password = Math.random().toString(36).slice(-10); // 10 caractères aléatoires
 
   try {
-    // ✅ Création de l'utilisateur Strapi via le token admin
-    const strapiResponse = await axios.post(
-  `${process.env.STRAPI_URL}/api/users`,
-  {
-    data: {
+    //  Vérifier d'abord si l'utilisateur existe déjà sur Strapi (via son email)
+    const existingUser = await axios.get(
+      `${process.env.STRAPI_URL}/api/users?filters[email][$eq]=${email}`,
+      {
+        headers: { Authorization: `Bearer ${process.env.STRAPI_ADMIN_TOKEN}` },
+      }
+    );
+
+    if (existingUser.data && existingUser.data.length > 0) {
+      return res.status(400).json({
+        message: '❌ Cet utilisateur existe déjà sur Strapi.',
+      });
+    }
+
+    //  Préparer les données à envoyer à Strapi
+    const userData = {
       username,
       email,
       password,
       firstname,
       lastname,
-      nodeId,
       role,
-    },
-  },
-  {
-    headers: {
-      Authorization: `Bearer ${process.env.STRAPI_ADMIN_TOKEN}`,
-    },
-  }
-);
+    };
 
+    //  Inclure nodeId UNIQUEMENT s’il est fourni (par WS Métier)
+    if (nodeId) {
+      userData.nodeId = nodeId;
+    }
 
-    const user = strapiResponse.data;
+    // =======================================================
+    //  Création de l'utilisateur sur Strapi via le point public
+    // =======================================================
+    // /api/auth/local/register permet de créer un utilisateur public
+    // et déclenche automatiquement l'envoi de l'email si configuré dans Strapi
+    const strapiResponse = await axios.post(
+      `${process.env.STRAPI_URL}/api/auth/local/register`,
+      userData
+    );
 
-    // // --- Envoyer un email à l'utilisateur avec le mot de passe temporaire ---
-    // try {
-    //   await CreationEmailService.sendWelcomeEmail(email, username, password);
-    //   console.log(`Email de bienvenue envoyé à ${email}`);
-    // } catch (mailError) {
-    //   console.error('Erreur envoi email:', mailError);
-    // }
+    //  Récupérer les informations retournées par Strapi
+    const user = strapiResponse.data.user;
 
+    console.log(` Utilisateur ${email} créé sur Strapi avec succès (mail automatique envoyé).`);
+
+    //  Retour au frontend avec message clair
     return res.status(201).json({
-      message: 'Utilisateur créé avec succès',
+      message: 'Utilisateur créé avec succès (mot de passe envoyé par email).',
       user,
     });
   } catch (error) {
@@ -57,11 +79,14 @@ exports.register = async (req, res) => {
   }
 };
 
-// ======================= CONNEXION =======================
+// =======================================================
+// ======================== CONNEXION =====================
+// =======================================================
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    //  Authentification via Strapi
     const strapiResponse = await axios.post(`${process.env.STRAPI_URL}/api/auth/local`, {
       identifier: email,
       password,
@@ -69,6 +94,7 @@ exports.login = async (req, res) => {
 
     const { jwt } = strapiResponse.data;
 
+    //  Récupération du profil utilisateur (avec rôle)
     const userResponse = await axios.get(`${process.env.STRAPI_URL}/api/users/me?populate=role`, {
       headers: { Authorization: `Bearer ${jwt}` },
     });
@@ -76,6 +102,7 @@ exports.login = async (req, res) => {
     const user = userResponse.data;
 
     res.status(200).json({
+      message: 'Connexion réussie',
       jwt,
       user,
     });
@@ -88,14 +115,20 @@ exports.login = async (req, res) => {
   }
 };
 
-// ======================= FORGOT PASSWORD =======================
+// =======================================================
+// ================== MOT DE PASSE OUBLIÉ =================
+// =======================================================
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    const response = await axios.post(`${process.env.STRAPI_URL}/api/auth/forgot-password`, { email });
+
+    //  Demande à Strapi d’envoyer le mail de réinitialisation
+    await axios.post(`${process.env.STRAPI_URL}/api/auth/forgot-password`, { email });
 
     console.log(`✅ Email de réinitialisation envoyé à ${email}`);
-    res.status(200).json({ message: 'Email de réinitialisation envoyé si l’utilisateur existe' });
+    res.status(200).json({
+      message: 'Email de réinitialisation envoyé si l’utilisateur existe.',
+    });
   } catch (error) {
     console.error('❌ Erreur forgot-password:', error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
@@ -105,17 +138,24 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// ======================= RESET PASSWORD =======================
+// =======================================================
+// ================== RÉINITIALISATION MDP =================
+// =======================================================
 exports.resetPassword = async (req, res) => {
   try {
     const { code, password, passwordConfirmation } = req.body;
+
+    //  Envoie la nouvelle paire de mots de passe à Strapi
     const response = await axios.post(`${process.env.STRAPI_URL}/api/auth/reset-password`, {
       code,
       password,
       passwordConfirmation,
     });
 
-    res.status(200).json({ message: 'Mot de passe réinitialisé avec succès', data: response.data });
+    res.status(200).json({
+      message: 'Mot de passe réinitialisé avec succès',
+      data: response.data,
+    });
   } catch (error) {
     console.error('❌ Erreur reset-password:', error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
