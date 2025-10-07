@@ -17,11 +17,10 @@ const config = {
 // Récupérer les avocats
 exports.getAvocats = async (req, res) => {
   const { sitename } = req.params;  // Récupérer le sitename à partir des paramètres de l'URL
-  const baseUrl = 'http://54.38.55.19:8181/alfresco/s/ged/search-objets';  // Base URL de l'API
 
   try {
     // Construire l'URL de l'API avec le sitename (ex: "portail-recouvrement")
-    const url = `${baseUrl}/${sitename}/avocat`;
+    const url = `${process.env.baseUrl}/${sitename}/avocat`;
 
     // Effectuer la requête GET avec Axios, en ajoutant les headers nécessaires
     const response = await axios.get(url, config);
@@ -52,11 +51,9 @@ exports.getAvocatById = async (req, res) => {
     return res.status(400).json({ error: 'Les paramètres sitename et debiteurId sont requis' });
   }
 
-  const baseUrl = 'http://54.38.55.19:8181/alfresco/s/ged/search-objets';  // Base URL de l'API
-
   try {
     // Construire l'URL de l'API avec le sitename et avocatId (ex: "portail-recouvrement" et avocatId)
-    const url = `${baseUrl}/${sitename}/debiteur/${avocatId}`;
+    const url = `${process.env.baseUrl}/${sitename}/debiteur/${avocatId}`;
 
     // Effectuer la requête GET avec Axios, en ajoutant les headers nécessaires
     const response = await axios.get(url, config);
