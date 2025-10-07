@@ -16,22 +16,24 @@ exports.register = async (req, res) => {
     const strapiResponse = await axios.post(
   `${process.env.STRAPI_URL}/api/users`,
   {
-    data: {
-      username,
-      email,
-      password,
-      firstname,
-      lastname,
-      nodeId,
-      role,
-    },
+    username,
+    email,
+    password,
+    confirmed: true,
+    blocked: false,
+    firstname,
+    lastname,
+    nodeId,
+    role,
   },
   {
     headers: {
       Authorization: `Bearer ${process.env.STRAPI_ADMIN_TOKEN}`,
-    },
+      'Content-Type': 'application/json'
+    }
   }
 );
+
 
 
     const user = strapiResponse.data;
