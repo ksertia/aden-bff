@@ -5,5 +5,6 @@ const creancierController = require('../controllers/creancier');  // Importer le
 
 // Route pour récupérer les débiteurs
 router.get('/creanciers/:sitename', creancierController.getCreanciers);
+router.get('/creanciers/:sitename/:creances', creancierController.getCreances);
 
 module.exports = router;
