@@ -16,7 +16,7 @@ const config = {
 
 exports.getDossiers = async (req, res) => {
   const { sitename } = req.params;  // Récupérer le sitename à partir des paramètres de l'URL
-  const { step, statutGlobal, maxResults, debiteurNodeId,numeroDossier,partenaireNodeId,avocatNodeId,cedantNodeId } = req.query;  // Récupérer les paramètres de la requête (query string)
+  const { step, statutGlobal, maxResults, debiteurNodeId,creancierNodeId,numeroDossier,partenaireNodeId,avocatNodeId,cedantNodeId } = req.query;  // Récupérer les paramètres de la requête (query string)
 
   try {
     // Construire les paramètres de la requête
@@ -28,9 +28,10 @@ exports.getDossiers = async (req, res) => {
     if (maxResults) queryParams.push(`maxResults=${maxResults}`);
     if (numeroDossier) queryParams.push(`numeroDossier=${numeroDossier}`);
     if (debiteurNodeId) queryParams.push(`debiteurNodeId=${debiteurNodeId}`);
+    if (creancierNodeId) queryParams.push(`creancierNodeId=${creancierNodeId}`);
     if (cedantNodeId) queryParams.push(`cedantNodeId=${cedantNodeId}`);
-    if (avocatNodeId) queryParams.push(`debiteurNodeId=${avocatNodeId}`);
-    if (partenaireNodeId) queryParams.push(`debiteurNodeId=${debiteurNodeId}`);
+    if (avocatNodeId) queryParams.push(`avocatNodeId=${avocatNodeId}`);
+    if (partenaireNodeId) queryParams.push(`partenaireNodeId=${partenaireNodeId}`);
     
 
     // Joindre les paramètres à l'URL
@@ -38,7 +39,7 @@ exports.getDossiers = async (req, res) => {
     const url = `${process.env.baseUrl}/${sitename}/dossier${queryString}`;
 
     // Log de l'URL finale avant exécution pour vérifier la construction correcte de l'URL
-    console.log(url);
+    console.log('URL appelée :',url);
 
     // Effectuer la requête GET avec Axios et les headers nécessaires
     const response = await axios.get(url, config);
