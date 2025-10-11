@@ -8,50 +8,64 @@ const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
 exports.register = async (req, res) => {
   const { username, email, firstname, lastname, nodeId, role } = req.body;
 
-  // Génère un mot de passe temporaire sécurisé
-  const password = Math.random().toString(36).slice(-8);
-
-  try {
-    // ✅ Création de l'utilisateur Strapi via le token admin
-    const strapiResponse = await axios.post(
-  `${process.env.STRAPI_URL}/api/users`,
-  {
+  // 🔍 Log de ce que le BFF reçoit d’Angular
+  console.log('📥 [BFF] Données reçues depuis Angular:', {
     username,
     email,
-    password,
-    confirmed: true,
-    blocked: false,
     firstname,
     lastname,
     nodeId,
     role,
-  },
-  {
-    headers: {
-      Authorization: `Bearer ${process.env.STRAPI_ADMIN_TOKEN}`,
-      'Content-Type': 'application/json'
-    }
-  }
-);
+  });
 
+  // Génère un mot de passe temporaire sécurisé
+  const password = Math.random().toString(36).slice(-8);
 
+  try {
+    // 🔍 Log avant d’envoyer à Strapi
+    console.log('🚀 [BFF] Envoi des données vers Strapi:', {
+      username,
+      email,
+      firstname,
+      lastname,
+      nodeId,
+      role,
+      passwordMasqué: password.replace(/./g, '*'),
+    });
+
+    // ✅ Création de l'utilisateur dans Strapi
+    const strapiResponse = await axios.post(
+      `${process.env.STRAPI_URL}/api/users`,
+      {
+        username,
+        email,
+        password,
+        confirmed: true,
+        blocked: false,
+        firstname,
+        lastname,
+        nodeId,
+        role,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.STRAPI_ADMIN_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    // 🔍 Log du retour Strapi
+    console.log('✅ [BFF] Réponse de Strapi:', strapiResponse.data);
 
     const user = strapiResponse.data;
-
-    // // --- Envoyer un email à l'utilisateur avec le mot de passe temporaire ---
-    // try {
-    //   await CreationEmailService.sendWelcomeEmail(email, username, password);
-    //   console.log(`Email de bienvenue envoyé à ${email}`);
-    // } catch (mailError) {
-    //   console.error('Erreur envoi email:', mailError);
-    // }
 
     return res.status(201).json({
       message: 'Utilisateur créé avec succès',
       user,
     });
   } catch (error) {
-    console.error('❌ Erreur création Strapi:', error.response?.data || error.message);
+    console.error('❌ [BFF] Erreur création Strapi:', error.response?.data || error.message);
     return res.status(500).json({
       message: "Erreur lors de la création de l'utilisateur",
       error: error.response?.data || error.message,
