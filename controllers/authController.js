@@ -1,6 +1,6 @@
 const axios = require('axios');
 const nodemailer = require('nodemailer');
-
+const CreationEmailService = require('../services/emailCreationCompteStrapi');
 // Informations d'authentification pour WS Métier
 const username = 'admin';
 const password = 'admin';
