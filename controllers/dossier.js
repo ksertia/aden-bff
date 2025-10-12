@@ -16,7 +16,7 @@ const config = {
 
 exports.getDossiers = async (req, res) => {
   const { sitename } = req.params;  // Récupérer le sitename à partir des paramètres de l'URL
-  const { step, statutGlobal, maxResults, debiteurNodeId,creancierNodeId,numeroDossier,partenaireNodeId,avocatNodeId,cedantNodeId } = req.query;  // Récupérer les paramètres de la requête (query string)
+  const { step, statutGlobal, maxResults, debiteurNodeId, creancierNodeId, huissierNodeId, numeroDossier,partenaireNodeId,avocatNodeId,cedantNodeId } = req.query;  // Récupérer les paramètres de la requête (query string)
 
   try {
     // Construire les paramètres de la requête
@@ -29,6 +29,7 @@ exports.getDossiers = async (req, res) => {
     if (numeroDossier) queryParams.push(`numeroDossier=${numeroDossier}`);
     if (debiteurNodeId) queryParams.push(`debiteurNodeId=${debiteurNodeId}`);
     if (creancierNodeId) queryParams.push(`creancierNodeId=${creancierNodeId}`);
+    if (huissierNodeId) queryParams.push(`huissierNodeId=${huissierNodeId}`);
     if (cedantNodeId) queryParams.push(`cedantNodeId=${cedantNodeId}`);
     if (avocatNodeId) queryParams.push(`avocatNodeId=${avocatNodeId}`);
     if (partenaireNodeId) queryParams.push(`partenaireNodeId=${partenaireNodeId}`);
