@@ -32,4 +32,7 @@ router.get('/creances', authMiddleware, roleMiddleware(['Créancier', 'Cédant']
   res.json({ message: 'Accès aux créances autorisé', user: req.user });
 });
 
+// ⚡ Nouvelle route pour rechercher un utilisateur par email
+router.get('/users/search/:email', authController.getUserByEmail);
+
 module.exports = router;

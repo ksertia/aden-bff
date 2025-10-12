@@ -16,40 +16,96 @@ const config = {
 };
 
 // Inscription
-exports.register = async (req, res) => {
-  const { username, email,nodeId } = req.body;
+// Mise à jour de la fonction register dans auth.controller.js
+// Mise à jour de la fonction register dans auth.controller.js
 
-  // 1️⃣ Génère un mot de passe temporaire aléatoire et fort
-  const password = Math.random().toString(36).slice(-10) + 'A@1'; // un peu plus complexe
+exports.register = async (req, res) => {
+  const { username, email, nodeId, firstName, lastName, role } = req.body;
+
+  // ⚡ Validation des champs requis
+  if (!username || !email) {
+    return res.status(400).json({ message: 'Username et email sont requis' });
+  }
+
+  if (!role) {
+    return res.status(400).json({ message: 'Le rôle est requis' });
+  }
+
+  // 1️⃣ Génération d’un mot de passe temporaire fort
+  const password = Math.random().toString(36).slice(-10) + 'A@1';
 
   try {
-    const strapiResponse = await axios.post(`${process.env.STRAPI_URL}/api/auth/local/register`, {
+    const roleId = typeof role === 'string' ? parseInt(role, 10) : role;
+    const adminToken = process.env.STRAPI_ADMIN_TOKEN;
+
+    if (!adminToken) {
+      return res.status(500).json({
+        message: "Le token admin Strapi n'est pas configuré. Vérifie STRAPI_ADMIN_TOKEN dans ton fichier .env"
+      });
+    }
+
+    console.log('📝 Données envoyées à Strapi (via /api/users):', {
       username,
       email,
-      password,
-      nodeId
+      nodeId,
+      firstname: firstName,
+      lastname: lastName,
+      role: roleId
     });
 
-    const { jwt, user } = strapiResponse.data;
+    // 2️⃣ Création de l'utilisateur avec le token admin
+    const strapiResponse = await axios.post(
+      `${process.env.STRAPI_URL}/api/users`,
+      {
+        username,
+        email,
+        password,
+        nodeId: nodeId || null,
+        firstname: firstName || '',
+        lastname: lastName || '',
+        role: roleId, // ⚡ le rôle est passé ici correctement
+        confirmed: true, // ⚡ tu peux aussi confirmer directement l’utilisateur si tu veux
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-    res.json({
-      jwt,
+    const user = strapiResponse.data;
+
+    console.log('✅ Utilisateur créé avec succès:', {
+      id: user.id,
+      email: user.email,
+      role: user.role?.name,
+    });
+
+    // 3️⃣ Réponse finale
+    res.status(201).json({
+      message: 'Utilisateur créé avec succès dans Strapi',
       user: {
         id: user.id,
+        documentId: user.documentId,
         email: user.email,
         username: user.username,
-        nodeId:user.nodeId,
-        roles: user.roles
-      }
+        nodeId: user.nodeId,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        role: user.role,
+      },
     });
 
   } catch (error) {
-    console.error('Erreur d\'inscription Strapi:', error.response?.data || error.message);
-    res.status(500).json({ message: "Erreur lors de l'inscription", error: error.response?.data || error.message });
+    console.error('❌ Erreur inscription Strapi:', error.response?.data || error.message);
+
+    return res.status(error.response?.status || 500).json({
+      message: "Erreur lors de l'inscription dans Strapi",
+      error: error.response?.data || error.message,
+    });
   }
 };
-
-
 
 
 // Connexion
@@ -143,6 +199,67 @@ exports.resetPassword = async (req, res) => {
     res.status(error.response?.status || 500).json({
       message: 'Erreur lors de la réinitialisation du mot de passe',
       error: error.response?.data || error.message,
+    });
+  }
+};
+
+// ======================= SEARCH USER BY EMAIL =======================
+exports.getUserByEmail = async (req, res) => {
+  const { email } = req.params;
+
+  if (!email) {
+    return res.status(400).json({ 
+      message: 'Email est requis' 
+    });
+  }
+
+  try {
+    // ⚡ Utilise le token admin Strapi ou récupère-le depuis la requête
+    const adminToken = process.env.STRAPI_ADMIN_TOKEN; // Token admin Strapi à ajouter dans .env
+    
+    // Appel à Strapi pour rechercher l'utilisateur
+    const response = await axios.get(
+      `${process.env.STRAPI_URL}/api/users?filters[email][$eq]=${email}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    // Strapi retourne un tableau, on prend le premier résultat
+    const users = response.data;
+    
+    if (users && users.length > 0) {
+      const user = users[0];
+      
+      // Retourne l'utilisateur trouvé
+      return res.status(200).json({
+        id: user.id,
+        documentId: user.documentId,
+        username: user.username,
+        email: user.email,
+        blocked: user.blocked,
+        confirmed: user.confirmed,
+        nodeId: user.nodeId,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        role: user.role?.name || 'Authenticated'
+      });
+    } else {
+      // Aucun utilisateur trouvé
+      return res.status(404).json({ 
+        message: 'Aucun utilisateur trouvé avec cet email' 
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Erreur recherche utilisateur:', error.response?.data || error.message);
+    
+    return res.status(error.response?.status || 500).json({
+      message: 'Erreur lors de la recherche de l\'utilisateur',
+      error: error.response?.data || error.message
     });
   }
 };
