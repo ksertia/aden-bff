@@ -10,6 +10,7 @@ const avocatRoutes = require('./routes/avocatRoutes');
 const cedantRoutes = require('./routes/cedantRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const dossierRoutes = require('./routes/dossierRoutes');
+const documentRoutes = require('./routes/documentRoutes');
 
 
 
@@ -49,6 +50,8 @@ app.use('/api', adminRoutes);
 
 // dossier routes
 app.use('/api', dossierRoutes);
+
+app.use('/api', documentRoutes);
 
 
 // Global error handler
