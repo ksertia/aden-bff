@@ -17,8 +17,8 @@ const upload = multer({ dest: 'uploads/' });
 // 🔹 Upload d’un document vers Alfresco
 router.post('/documents/upload', upload.single('file'), documentController.uploadDocument);
 
-// 🔹 Association du document à un objet (ex. entreprise, dossier, etc.)
-router.post('/documents/associate', documentController.associateDocument);
+// // 🔹 Association du document à un objet (ex. entreprise, dossier, etc.)
+// router.post('/documents/associate', documentController.associateDocument);
 
 // 🔹 Récupération du contenu d’un document par son nodeId Alfresco
 router.get('/documents/:nodeId/content', documentController.getDocumentContent);

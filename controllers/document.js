@@ -75,68 +75,68 @@ exports.uploadDocument = async (req, res) => {
   }
 };
 
-// ==============================================
-// 🧩 2️⃣ ASSOCIATION DU DOCUMENT À UN OBJET
-// ==============================================
-exports.associateDocument = async (req, res) => {
-  try {
-    const {
-      raisonSociale, contactPrincipal, emailProfessionnel,
-      telephone, adresseSiegeSocial, codePostal, ifu,
-      secteurActivite, chiffreAffaires, nombreEmployes,
-      typeCreancier, delaiPaiementHabituel, assuranceCredit,
-      commentaires, documentIdentite
-    } = req.body;
+// // ==============================================
+// // 🧩 2️⃣ ASSOCIATION DU DOCUMENT À UN OBJET
+// // ==============================================
+// exports.associateDocument = async (req, res) => {
+//   try {
+//     const {
+//       raisonSociale, contactPrincipal, emailProfessionnel,
+//       telephone, adresseSiegeSocial, codePostal, ifu,
+//       secteurActivite, chiffreAffaires, nombreEmployes,
+//       typeCreancier, delaiPaiementHabituel, assuranceCredit,
+//       commentaires, documentIdentite
+//     } = req.body;
 
-    const dateNow = new Date().toISOString().replace('T', ' ').substring(0, 19);
-    const objetId = `cedant-admin-portail-recouvrement-${dateNow.replace(/[-:\s]/g, '')}`;
+//     const dateNow = new Date().toISOString().replace('T', ' ').substring(0, 19);
+//     const objetId = `cedant-admin-portail-recouvrement-${dateNow.replace(/[-:\s]/g, '')}`;
 
-    const responseData = {
-      code: 200,
-      data: {
-        map: {
-          dateCreation: dateNow,
-          createurUsername: "admin",
-          raisonSociale,
-          contactPrincipal,
-          emailProfessionnel,
-          telephone,
-          adresseSiegeSocial,
-          codePostal,
-          ifu,
-          secteurActivite,
-          chiffreAffaires,
-          nombreEmployes,
-          typeCreancier,
-          delaiPaiementHabituel,
-          assuranceCredit,
-          commentaires,
-          typeObjet: "cedant",
-          statutGlobal: "NOUVEAU",
-          objetId,
-          documentIdentite: {
-            titre: documentIdentite?.titre || "",
-            typeDocument: documentIdentite?.typeDocument || "",
-            documentNodeId: documentIdentite?.documentNodeId,
-            fileName: documentIdentite?.fileName,
-            fileExtension: documentIdentite?.fileName?.split('.').pop() || "",
-          },
-        },
-      },
-      details: "Record successfully created",
-      message: "OK",
-    };
+//     const responseData = {
+//       code: 200,
+//       data: {
+//         map: {
+//           dateCreation: dateNow,
+//           createurUsername: "admin",
+//           raisonSociale,
+//           contactPrincipal,
+//           emailProfessionnel,
+//           telephone,
+//           adresseSiegeSocial,
+//           codePostal,
+//           ifu,
+//           secteurActivite,
+//           chiffreAffaires,
+//           nombreEmployes,
+//           typeCreancier,
+//           delaiPaiementHabituel,
+//           assuranceCredit,
+//           commentaires,
+//           typeObjet: "cedant",
+//           statutGlobal: "NOUVEAU",
+//           objetId,
+//           documentIdentite: {
+//             titre: documentIdentite?.titre || "",
+//             typeDocument: documentIdentite?.typeDocument || "",
+//             documentNodeId: documentIdentite?.documentNodeId,
+//             fileName: documentIdentite?.fileName,
+//             fileExtension: documentIdentite?.fileName?.split('.').pop() || "",
+//           },
+//         },
+//       },
+//       details: "Record successfully created",
+//       message: "OK",
+//     };
 
-    return res.status(200).json(responseData);
+//     return res.status(200).json(responseData);
 
-  } catch (error) {
-    console.error("❌ Erreur association :", error);
-    return res.status(500).json({
-      message: "Erreur lors de l'association du document",
-      error: error.message,
-    });
-  }
-};
+//   } catch (error) {
+//     console.error("❌ Erreur association :", error);
+//     return res.status(500).json({
+//       message: "Erreur lors de l'association du document",p
+//       error: error.message,
+//     });
+//   }
+// };
 
 // ==============================================
 // 📄 3️⃣ RÉCUPÉRER LE CONTENU D'UN DOCUMENT PAR NODEID
