@@ -61,8 +61,8 @@ exports.register = async (req, res) => {
         email,
         password,
         nodeId: nodeId || null,
-        firstname: firstName || '',
-        lastname: lastName || '',
+        firstname: firstName ?? null,
+        lastname: lastName ?? null,
         role: roleId, // ⚡ le rôle est passé ici correctement
         confirmed: true, // ⚡ tu peux aussi confirmer directement l’utilisateur si tu veux
       },
