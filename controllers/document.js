@@ -1,5 +1,5 @@
 // ==============================================
-// 📦 CONTROLLER : Gestion des documents Alfresco
+// CONTROLLER : Gestion des documents Alfresco
 // ==============================================
 
 const axios = require('axios');
@@ -8,7 +8,7 @@ const fs = require('fs');
 require('dotenv').config();
 
 // ======================
-// ⚙️ Variables d'environnement
+// Variables d'environnement
 // ======================
 const ALFRESCO_UPLOAD_URL = process.env.ALFRESCO_UPLOAD_URL;
 const ALFRESCO_USERNAME = process.env.ALFRESCO_USERNAME;
@@ -16,7 +16,7 @@ const ALFRESCO_PASSWORD = process.env.ALFRESCO_PASSWORD;
 const WS_METIER_URL = process.env.WS_METIER_URL;
 
 // ==============================================
-// 📁 1️⃣ UPLOAD DOCUMENT VERS ALFRESCO
+//  UPLOAD DOCUMENT VERS ALFRESCO
 // ==============================================
 exports.uploadDocument = async (req, res) => {
   try {
@@ -29,7 +29,7 @@ exports.uploadDocument = async (req, res) => {
     form.append('name', req.file.originalname);
     form.append('nodeType', 'cm:content');
 
-    // 🔄 Envoi du fichier vers Alfresco
+    // Envoi du fichier vers Alfresco
     const uploadResponse = await axios.post(ALFRESCO_UPLOAD_URL, form, {
       headers: form.getHeaders(),
       auth: {
@@ -43,7 +43,7 @@ exports.uploadDocument = async (req, res) => {
 
     const data = uploadResponse.data.entry;
 
-    // 🧾 Retourne la même structure qu’Alfresco
+    // Retourne la même structure qu’Alfresco
     return res.status(200).json({
       entry: {
         isFile: true,
@@ -67,7 +67,7 @@ exports.uploadDocument = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Erreur upload :", error.response?.data || error.message);
+    console.error(" Erreur upload :", error.response?.data || error.message);
     return res.status(500).json({
       message: "Erreur lors de l'upload du document",
       error: error.response?.data || error.message,
@@ -76,7 +76,7 @@ exports.uploadDocument = async (req, res) => {
 };
 
 // // ==============================================
-// // 🧩 2️⃣ ASSOCIATION DU DOCUMENT À UN OBJET
+// // ASSOCIATION DU DOCUMENT À UN OBJET
 // // ==============================================
 // exports.associateDocument = async (req, res) => {
 //   try {
@@ -130,7 +130,7 @@ exports.uploadDocument = async (req, res) => {
 //     return res.status(200).json(responseData);
 
 //   } catch (error) {
-//     console.error("❌ Erreur association :", error);
+//     console.error(" Erreur association :", error);
 //     return res.status(500).json({
 //       message: "Erreur lors de l'association du document",p
 //       error: error.message,
@@ -139,16 +139,16 @@ exports.uploadDocument = async (req, res) => {
 // };
 
 // ==============================================
-// 📄 3️⃣ RÉCUPÉRER LE CONTENU D'UN DOCUMENT PAR NODEID
+//  RÉCUPÉRER LE CONTENU D'UN DOCUMENT PAR NODEID
 // ==============================================
 exports.getDocumentContent = async (req, res) => {
   try {
     const { nodeId } = req.params;
 
-    // 🔗 URL complète du contenu du document Alfresco
+    //  URL complète du contenu du document Alfresco
     const url = `${WS_METIER_URL}/alfresco/service/api/node/content/workspace/SpacesStore/${nodeId}`;
 
-    // 📡 Requête HTTP GET avec authentification Basic
+    //  Requête HTTP GET avec authentification Basic
     const response = await axios.get(url, {
       responseType: 'arraybuffer', // Pour recevoir du binaire
       headers: {
@@ -156,12 +156,12 @@ exports.getDocumentContent = async (req, res) => {
       }
     });
 
-    // 🔄 Transmet directement le fichier téléchargé avec le bon type MIME
+    //  Transmet directement le fichier téléchargé avec le bon type MIME
     res.setHeader('Content-Type', response.headers['content-type']);
     res.send(response.data);
 
   } catch (error) {
-    console.error("❌ Erreur récupération contenu :", error.response?.data || error.message);
+    console.error(" Erreur récupération contenu :", error.response?.data || error.message);
     res.status(500).json({
       message: "Erreur lors de la récupération du contenu du document",
       error: error.response?.data || error.message,

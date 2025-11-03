@@ -22,7 +22,7 @@ const config = {
 exports.register = async (req, res) => {
   const { username, email, nodeId, firstName, lastName, role } = req.body;
 
-  // ⚡ Validation des champs requis
+  // Validation des champs requis
   if (!username || !email) {
     return res.status(400).json({ message: 'Username et email sont requis' });
   }
@@ -31,7 +31,7 @@ exports.register = async (req, res) => {
     return res.status(400).json({ message: 'Le rôle est requis' });
   }
 
-  // 1️⃣ Génération d’un mot de passe temporaire fort
+  //  Génération d’un mot de passe temporaire fort
   const password = Math.random().toString(36).slice(-10) + 'A@1';
 
   try {
@@ -44,7 +44,7 @@ exports.register = async (req, res) => {
       });
     }
 
-    console.log('📝 Données envoyées à Strapi (via /api/users):', {
+    console.log(' Données envoyées à Strapi (via /api/users):', {
       username,
       email,
       nodeId,
@@ -53,7 +53,7 @@ exports.register = async (req, res) => {
       role: roleId
     });
 
-    // 2️⃣ Création de l'utilisateur avec le token admin
+    //  Création de l'utilisateur avec le token admin
     const strapiResponse = await axios.post(
       `${process.env.STRAPI_URL}/api/users`,
       {
@@ -63,8 +63,8 @@ exports.register = async (req, res) => {
         nodeId: nodeId || null,
         firstname: firstName ?? null,
         lastname: lastName ?? null,
-        role: roleId, // ⚡ le rôle est passé ici correctement
-        confirmed: true, // ⚡ tu peux aussi confirmer directement l’utilisateur si tu veux
+        role: roleId, //  le rôle est passé ici correctement
+        confirmed: true, //  tu peux aussi confirmer directement l’utilisateur si tu veux
       },
       {
         headers: {
@@ -76,13 +76,13 @@ exports.register = async (req, res) => {
 
     const user = strapiResponse.data;
 
-    console.log('✅ Utilisateur créé avec succès:', {
+    console.log('Utilisateur créé avec succès:', {
       id: user.id,
       email: user.email,
       role: user.role?.name,
     });
 
-    // 3️⃣ Réponse finale
+    //  Réponse finale
     res.status(201).json({
       message: 'Utilisateur créé avec succès dans Strapi',
       user: {
@@ -98,7 +98,7 @@ exports.register = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erreur inscription Strapi:', error.response?.data || error.message);
+    console.error(' Erreur inscription Strapi:', error.response?.data || error.message);
 
     return res.status(error.response?.status || 500).json({
       message: "Erreur lors de l'inscription dans Strapi",
@@ -214,7 +214,7 @@ exports.getUserByEmail = async (req, res) => {
   }
 
   try {
-    // ⚡ Utilise le token admin Strapi ou récupère-le depuis la requête
+    //  Utilise le token admin Strapi ou récupère-le depuis la requête
     const adminToken = process.env.STRAPI_ADMIN_TOKEN; // Token admin Strapi à ajouter dans .env
     
     // Appel à Strapi pour rechercher l'utilisateur
@@ -255,7 +255,7 @@ exports.getUserByEmail = async (req, res) => {
     }
 
   } catch (error) {
-    console.error('❌ Erreur recherche utilisateur:', error.response?.data || error.message);
+    console.error(' Erreur recherche utilisateur:', error.response?.data || error.message);
     
     return res.status(error.response?.status || 500).json({
       message: 'Erreur lors de la recherche de l\'utilisateur',
