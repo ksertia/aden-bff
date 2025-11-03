@@ -52,6 +52,7 @@ app.use('/api', adminRoutes);
 app.use('/api', dossierRoutes);
 
 app.use('/api', documentRoutes);
+app.use('/api', documentRoutes);
 
 
 // Global error handler
