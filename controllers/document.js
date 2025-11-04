@@ -18,6 +18,106 @@ const WS_METIER_URL = process.env.WS_METIER_URL;
 // ==============================================
 // 📁 UPLOAD DOCUMENT VERS ALFRESCO (FINAL)
 // ==============================================
+// exports.uploadDocument = async (req, res) => {
+//   try {
+//     if (!req.file) {
+//       return res.status(400).json({ message: "Aucun fichier uploadé" });
+//     }
+
+//     const { objetNodeId, fieldName, typeDocument } = req.query;
+//     if (!objetNodeId || !fieldName || !typeDocument) {
+//       return res.status(400).json({ message: "objetNodeId, fieldName et typeDocument sont requis dans les params" });
+//     }
+
+//     // const fileName = req.file.originalname;
+//     // const tmpPath = `/tmp/${fileName}`; 
+//     const originalFileName = req.file.originalname;
+//     const fileExtension = originalFileName.split('.').pop().toLowerCase();
+//     const tmpPath = `/tmp/${originalFileName}`;
+
+//     // 🔹 Renommer le fichier temporairement pour conserver le nom exact
+//     fs.renameSync(req.file.path, tmpPath);
+
+//     // 🔹 Prépare le form-data
+//     // const form = new FormData();
+//     // form.append("filedata", fs.createReadStream(tmpPath));
+//     // form.append("nodeType", "cm:content");
+//     // form.append("name", fileName); 
+//     const form = new FormData();
+//     form.append("filedata", fs.createReadStream(tmpPath));
+//     form.append("nodeType", "cm:content");
+//     form.append("name", originalFileName); // ✅ Garder le nom COMPLET avec extension
+
+
+//     // 🔹 URL Alfresco avec query params
+//     const alfrescoUrl = `${ALFRESCO_UPLOAD_URL}?objetNodeId=${objetNodeId}&fieldName=${fieldName}&typeDocument=${typeDocument}`;
+//      console.log('📤 Envoi à Alfresco:', {
+//       fileName: originalFileName,
+//       extension: fileExtension,
+//       alfrescoUrl: alfrescoUrl
+//     });
+
+//     // 🔹 Envoi vers Alfresco
+//     const uploadResponse = await axios.post(alfrescoUrl, form, {
+//       headers: {
+//         ...form.getHeaders(),
+//         Authorization: `Basic ${Buffer.from(`${ALFRESCO_USERNAME}:${ALFRESCO_PASSWORD}`).toString("base64")}`,
+//       },
+//     });
+
+//     // 🔹 Supprime le fichier temporaire
+//     fs.unlinkSync(tmpPath);
+
+//     // 🔹 Récupère le fichier créé depuis Alfresco
+//     const alfrescoFile = uploadResponse.data.files[0];
+//     console.log('📥 Réponse Alfresco:', alfrescoFile);
+
+//     // 🔹 CORRECTION: S'assurer que le fileName inclut l'extension
+//     const finalFileName = alfrescoFile.fileName || originalFileName;
+    
+//     // Si Alfresco a retiré l'extension, on la rajoute
+//     let correctedFileName = finalFileName;
+//     if (!finalFileName.includes('.') && fileExtension) {
+//       correctedFileName = `${finalFileName}.${fileExtension}`;
+//     }
+
+//     // 🔹 Reformate la réponse pour le front-end
+//     const formattedResponse = {
+//       fieldName,
+//       // files: [
+//       //   {
+//       //     documentNodeId: alfrescoFile.documentNodeId,
+//       //     fileName: fileName,
+//       //     fileExtension: fileName.split(".").pop().toLowerCase(),
+//       //     titre: alfrescoFile.titre || "",
+//       //     typeDocument,
+//       //   },
+//       // ],
+//         files: [
+//         {
+//           documentNodeId: alfrescoFile.documentNodeId,
+//           fileName: correctedFileName, // ⬅️ CORRECTION ICI
+//           fileExtension: fileExtension,
+//           titre: alfrescoFile.titre || "",
+//           typeDocument,
+//         },
+//       ],
+//       isListField: true,
+//       site: "portail-recouvrement",
+//       status: "success",
+//       typeObjet: "dossier",
+//     };
+
+//     return res.status(200).json(formattedResponse);
+
+//   } catch (error) {
+//     console.error("❌ Erreur upload :", error.response?.data || error.message);
+//     return res.status(500).json({
+//       message: "Erreur lors de l'upload du document",
+//       error: error.response?.data || error.message,
+//     });
+//   }
+// };
 exports.uploadDocument = async (req, res) => {
   try {
     if (!req.file) {
@@ -29,22 +129,39 @@ exports.uploadDocument = async (req, res) => {
       return res.status(400).json({ message: "objetNodeId, fieldName et typeDocument sont requis dans les params" });
     }
 
-    const fileName = req.file.originalname;
-    const tmpPath = `/tmp/${fileName}`; // chemin temporaire sur le serveur
+    const originalFileName = req.file.originalname;
+    const fileExtension = originalFileName.split('.').pop().toLowerCase();
+    
+    // 🔥 CORRECTION: Utiliser le chemin TEMPORAIRE CORRECT
+    const tmpDir = require('os').tmpdir(); // Dossier temp système
+    const tmpPath = require('path').join(tmpDir, originalFileName);
 
-    // 🔹 Renommer le fichier temporairement pour conserver le nom exact
-    fs.renameSync(req.file.path, tmpPath);
+    console.log('📁 Chemins:', {
+      source: req.file.path,
+      destination: tmpPath
+    });
 
-    // 🔹 Prépare le form-data
+    // 🔥 Vérifier si le fichier source existe
+    if (!fs.existsSync(req.file.path)) {
+      return res.status(400).json({ message: "Fichier source introuvable" });
+    }
+
+    // Copier le fichier vers le dossier temp système
+    fs.copyFileSync(req.file.path, tmpPath);
+    
+    // Supprimer le fichier original d'upload
+    fs.unlinkSync(req.file.path);
+
+    // 🔥 SOLUTION SIMPLIFIÉE: Utiliser directement le nom original
     const form = new FormData();
     form.append("filedata", fs.createReadStream(tmpPath));
     form.append("nodeType", "cm:content");
-    form.append("name", fileName); // ✅ Alfresco conservera le vrai nom
+    form.append("name", originalFileName); // Nom original avec extension
 
-    // 🔹 URL Alfresco avec query params
     const alfrescoUrl = `${ALFRESCO_UPLOAD_URL}?objetNodeId=${objetNodeId}&fieldName=${fieldName}&typeDocument=${typeDocument}`;
 
-    // 🔹 Envoi vers Alfresco
+    console.log('📤 Envoi à Alfresco avec nom:', originalFileName);
+
     const uploadResponse = await axios.post(alfrescoUrl, form, {
       headers: {
         ...form.getHeaders(),
@@ -52,22 +169,26 @@ exports.uploadDocument = async (req, res) => {
       },
     });
 
-    // 🔹 Supprime le fichier temporaire
-    fs.unlinkSync(tmpPath);
+    // Nettoyer le fichier temporaire
+    if (fs.existsSync(tmpPath)) {
+      fs.unlinkSync(tmpPath);
+    }
 
-    // 🔹 Récupère le fichier créé depuis Alfresco
     const alfrescoFile = uploadResponse.data.files[0];
 
-    // 🔹 Reformate la réponse pour le front-end
+    console.log('📥 Réponse Alfresco:', alfrescoFile);
+
+    // 🔥 Retourner TOUJOURS le nom original
     const formattedResponse = {
       fieldName,
       files: [
         {
           documentNodeId: alfrescoFile.documentNodeId,
-          fileName: fileName,
-          fileExtension: fileName.split(".").pop().toLowerCase(),
+          fileName: originalFileName, // 🔥 NOM ORIGINAL GARANTI
+          fileExtension: fileExtension,
           titre: alfrescoFile.titre || "",
           typeDocument,
+          mimeType: req.file.mimetype
         },
       ],
       isListField: true,
@@ -76,16 +197,26 @@ exports.uploadDocument = async (req, res) => {
       typeObjet: "dossier",
     };
 
+    console.log('✅ Upload réussi:', formattedResponse);
+
     return res.status(200).json(formattedResponse);
 
   } catch (error) {
-    console.error("❌ Erreur upload :", error.response?.data || error.message);
+    console.error("❌ Erreur upload :", error);
+    
+    // Nettoyer les fichiers temporaires en cas d'erreur
+    if (tmpPath && fs.existsSync(tmpPath)) {
+      fs.unlinkSync(tmpPath);
+    }
+    
     return res.status(500).json({
       message: "Erreur lors de l'upload du document",
-      error: error.response?.data || error.message,
+      error: error.message,
     });
   }
 };
+
+
 
 
 // ==============================================
