@@ -18,7 +18,7 @@ class CreationEmailService {
       const result = await EmailService.sendEmail(userEmail, subject, htmlContent);
       return result;
     } catch (error) {
-      console.error('❌ Erreur lors de l\'envoi de l\'email:', error);
+      console.error(' Erreur lors de l\'envoi de l\'email:', error);
       return { success: false, error };
     }
   }

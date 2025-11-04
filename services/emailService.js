@@ -22,10 +22,10 @@ class EmailService {
   async verifyConnection() {
     try {
       await this.transporter.verify();
-      console.log('✅ Serveur SMTP configuré avec succès');
+      console.log(' Serveur SMTP configuré avec succès');
       return true;
     } catch (error) {
-      console.error('❌ Erreur configuration SMTP:', error);
+      console.error(' Erreur configuration SMTP:', error);
       return false;
     }
   }
@@ -44,10 +44,10 @@ class EmailService {
 
     try {
       const result = await this.transporter.sendMail(mailOptions);
-      console.log(`✅ Email envoyé à: ${to}`);
+      console.log(` Email envoyé à: ${to}`);
       return { success: true, messageId: result.messageId };
     } catch (error) {
-      console.error('❌ Erreur envoi email:', error);
+      console.error(' Erreur envoi email:', error);
       throw error;
     }
   }
