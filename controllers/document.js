@@ -89,6 +89,44 @@ exports.uploadDocument = async (req, res) => {
 
 
 // ==============================================
+// 🗑️ SUPPRESSION D'UN DOCUMENT DANS ALFRESCO
+// ==============================================
+exports.deleteDocument = async (req, res) => {
+  try {
+    const { documentNodeId } = req.query;
+    if (!documentNodeId) {
+      return res.status(400).json({ message: "Le paramètre documentNodeId est requis" });
+    }
+
+    // 🔗 Construction de l'URL du service Alfresco
+    const alfrescoDeleteUrl = `${process.env.WS_METIER_URL}/alfresco/service/aden/file/objet?documentNodeId=${documentNodeId}`;
+
+    // 📡 Envoi de la requête DELETE vers Alfresco
+    const response = await axios.delete(alfrescoDeleteUrl, {
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${process.env.ALFRESCO_USERNAME}:${process.env.ALFRESCO_PASSWORD}`).toString("base64")}`,
+      },
+    });
+
+    // ✅ Reformater la réponse pour le front-end
+    return res.status(200).json({
+      code: response.data.code || 200,
+      data: response.data.data,
+      details: response.data.details || `Fichier supprimé avec succès`,
+      message: response.data.message || "OK",
+    });
+
+  } catch (error) {
+    console.error("❌ Erreur suppression :", error.response?.data || error.message);
+    return res.status(500).json({
+      message: "Erreur lors de la suppression du document",
+      error: error.response?.data || error.message,
+    });
+  }
+};
+
+
+// ==============================================
 // 📄 3️⃣ RÉCUPÉRER LE CONTENU D'UN DOCUMENT PAR NODEID
 // ==============================================
 exports.getDocumentContent = async (req, res) => {

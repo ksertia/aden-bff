@@ -17,6 +17,9 @@ const upload = multer({ dest: 'uploads/' });
 // 🔹 Upload d’un document vers Alfresco
 router.post('/documents/upload', upload.single('filedata'), documentController.uploadDocument);
 
+// Route de suppression
+router.delete('/deleteDocument', documentController.deleteDocument);
+
 // // 🔹 Association du document à un objet (ex. entreprise, dossier, etc.)
 // router.post('/documents/associate', documentController.associateDocument);
 
