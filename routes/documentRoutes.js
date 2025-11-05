@@ -14,9 +14,11 @@ const upload = multer({ dest: 'uploads/' });
 //  ROUTES DISPONIBLES
 // ==============================================
 
-//  Upload d’un document vers Alfresco
-// router.post('/documents/upload', upload.single('file'), documentController.uploadDocument);
-router.post('/documents/:sitename/upload', documentController.uploadFile);
+// Upload d’un document vers Alfresco
+router.post('/documents/upload', upload.single('filedata'), documentController.uploadDocument);
+
+// Route de suppression
+router.delete('/deleteDocument', documentController.deleteDocument);
 
 // //  Association du document à un objet (ex. entreprise, dossier, etc.)
 // router.post('/documents/associate', documentController.associateDocument);
@@ -25,6 +27,6 @@ router.post('/documents/:sitename/upload', documentController.uploadFile);
 router.get('/documents/:nodeId/content', documentController.getDocumentContent);
 
 // ==============================================
-// EXPORT DES ROUTES
+//  EXPORT DES ROUTES
 // ==============================================
 module.exports = router;

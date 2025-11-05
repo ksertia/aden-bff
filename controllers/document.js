@@ -1,5 +1,5 @@
 // ==============================================
-//  CONTROLLER : Gestion des documents Alfresco
+// CONTROLLER : Gestion des documents Alfresco
 // ==============================================
 
 const axios = require('axios');
@@ -22,7 +22,7 @@ const config = {
 };
 
 // ======================
-//  Variables d'environnement
+// Variables d'environnement
 // ======================
 const ALFRESCO_UPLOAD_URL = process.env.ALFRESCO_UPLOAD_URL;
 const ALFRESCO_USERNAME = process.env.ALFRESCO_USERNAME;
@@ -30,212 +30,174 @@ const ALFRESCO_PASSWORD = process.env.ALFRESCO_PASSWORD;
 const WS_METIER_URL = process.env.WS_METIER_URL;
 
 // ==============================================
-// 1UPLOAD DOCUMENT VERS ALFRESCO
+// UPLOAD DOCUMENT VERS ALFRESCO (FINAL)
 // ==============================================
-// exports.uploadDocument = async (req, res) => {
-//   try {
-//     // Vérifie la présence d'un fichier
-//     if (!req.file) return res.status(400).json({ message: "Aucun fichier uploadé" });
+exports.uploadDocument = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Aucun fichier uploadé" });
+    }
 
-//     // Prépare le corps de la requête (multipart/form-data)
-//     const form = new FormData();
-//     form.append('filedata', fs.createReadStream(req.file.path));
-//     form.append('name', req.file.originalname);
-//     form.append('nodeType', 'cm:content');
+    const { objetNodeId, fieldName, typeDocument } = req.query;
+    if (!objetNodeId || !fieldName || !typeDocument) {
+      return res.status(400).json({ message: "objetNodeId, fieldName et typeDocument sont requis dans les params" });
+    }
 
-//     // 🔄 Envoi du fichier vers Alfresco
-//     const uploadResponse = await axios.post(ALFRESCO_UPLOAD_URL, form, {
-//       headers: form.getHeaders(),
-//       auth: {
-//         username: ALFRESCO_USERNAME,
-//         password: ALFRESCO_PASSWORD
-//       }
-//     });
+    const originalFileName = req.file.originalname;
+    const fileExtension = originalFileName.split('.').pop().toLowerCase();
+    
+    // CORRECTION: Utiliser le chemin TEMPORAIRE CORRECT
+    const tmpDir = require('os').tmpdir(); // Dossier temp système
+    const tmpPath = require('path').join(tmpDir, originalFileName);
 
-//     // 🧹 Supprime le fichier temporaire après upload
-//     fs.unlinkSync(req.file.path);
+    console.log(' Chemins:', {
+      source: req.file.path,
+      destination: tmpPath
+    });
 
-//     const data = uploadResponse.data.entry;
+    //  Vérifier si le fichier source existe
+    if (!fs.existsSync(req.file.path)) {
+      return res.status(400).json({ message: "Fichier source introuvable" });
+    }
 
-//     // 🧾 Retourne la même structure qu’Alfresco
-//     return res.status(200).json({
-//       entry: {
-//         isFile: true,
-//         createdByUser: data.createdByUser || { id: "admin", displayName: "Administrator" },
-//         modifiedAt: data.modifiedAt,
-//         nodeType: data.nodeType,
-//         content: data.content,
-//         parentId: data.parentId,
-//         aspectNames: data.aspectNames || ["cm:versionable", "cm:titled", "cm:auditable", "cm:author"],
-//         createdAt: data.createdAt,
-//         isFolder: false,
-//         modifiedByUser: data.modifiedByUser || { id: "admin", displayName: "Administrator" },
-//         name: data.name,
-//         id: data.id,
-//         properties: data.properties || {
-//           "cm:versionLabel": "1.0",
-//           "cm:author": "Fadilatou",
-//           "cm:versionType": "MAJOR",
-//         },
-//       },
-//     });
+    // Copier le fichier vers le dossier temp système
+    fs.copyFileSync(req.file.path, tmpPath);
+    
+    // Supprimer le fichier original d'upload
+    fs.unlinkSync(req.file.path);
 
-//   } catch (error) {
-//     console.error("❌ Erreur upload :", error.response?.data || error.message);
-//     return res.status(500).json({
-//       message: "Erreur lors de l'upload du document",
-//       error: error.response?.data || error.message,
-//     });
-//   }
-// };
+    // SOLUTION SIMPLIFIÉE: Utiliser directement le nom original
+    const form = new FormData();
+    form.append("filedata", fs.createReadStream(tmpPath));
+    form.append("nodeType", "cm:content");
+    form.append("name", originalFileName); // Nom original avec extension
+
+    const alfrescoUrl = `${ALFRESCO_UPLOAD_URL}?objetNodeId=${objetNodeId}&fieldName=${fieldName}&typeDocument=${typeDocument}`;
+
+    console.log(' Envoi à Alfresco avec nom:', originalFileName);
+
+    const uploadResponse = await axios.post(alfrescoUrl, form, {
+      headers: {
+        ...form.getHeaders(),
+        Authorization: `Basic ${Buffer.from(`${ALFRESCO_USERNAME}:${ALFRESCO_PASSWORD}`).toString("base64")}`,
+      },
+    });
+
+    // Nettoyer le fichier temporaire
+    if (fs.existsSync(tmpPath)) {
+      fs.unlinkSync(tmpPath);
+    }
+
+    const alfrescoFile = uploadResponse.data.files[0];
+
+    console.log(' Réponse Alfresco:', alfrescoFile);
+
+    //  Retourner TOUJOURS le nom original
+    const formattedResponse = {
+      fieldName,
+      files: [
+        {
+          documentNodeId: alfrescoFile.documentNodeId,
+          fileName: originalFileName, //  NOM ORIGINAL GARANTI
+          fileExtension: fileExtension,
+          titre: alfrescoFile.titre || "",
+          typeDocument,
+          mimeType: req.file.mimetype
+        },
+      ],
+      isListField: true,
+      site: "portail-recouvrement",
+      status: "success",
+      typeObjet: "dossier",
+    };
+
+    console.log(' Upload réussi:', formattedResponse);
+
+    return res.status(200).json(formattedResponse);
+
+  } catch (error) {
+    console.error(" Erreur upload :", error);
+    
+    // Nettoyer les fichiers temporaires en cas d'erreur
+    if (tmpPath && fs.existsSync(tmpPath)) {
+      fs.unlinkSync(tmpPath);
+    }
+    
+    return res.status(500).json({
+      message: "Erreur lors de l'upload du document",
+      error: error.message,
+    });
+  }
+};
 
 
 
 
-  exports.uploadFile = async (objetNodeId, fieldName, typeDocument, file, sitename) => {
-    try {
-      // Créer une instance de FormData
-      const form = new FormData();
-      form.append('file', file);  // Ajouter le fichier
-      form.append('objetNodeId', objetNodeId);
-      form.append('fieldName', fieldName);
-      form.append('typeDocument', typeDocument);
+// ==============================================
+//  SUPPRESSION D'UN DOCUMENT DANS ALFRESCO
+// ==============================================
+exports.deleteDocument = async (req, res) => {
+  try {
+    const { documentNodeId } = req.query;
+    if (!documentNodeId) {
+      return res.status(400).json({ message: "Le paramètre documentNodeId est requis" });
+    }
 
-      // Configurer les headers : utiliser form.getHeaders() pour 'multipart/form-data'
-      const headers = {
-        ...form.getHeaders(),  // Headers automatiquement générés pour le formulaire
-        'Authorization': `Basic ${basicAuth}`,  // Ajouter l'authentification
-      };
+    //  Construction de l'URL du service Alfresco
+    const alfrescoDeleteUrl = `${process.env.WS_METIER_URL}/alfresco/service/aden/file/objet?documentNodeId=${documentNodeId}`;
 
-      // Construire l'URL pour la requête POST
-      const url = `${process.env.baseUrl}/${sitename}/upload`;
+    //  Envoi de la requête DELETE vers Alfresco
+    const response = await axios.delete(alfrescoDeleteUrl, {
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${process.env.ALFRESCO_USERNAME}:${process.env.ALFRESCO_PASSWORD}`).toString("base64")}`,
+      },
+    });
 
-      // Log de l'URL finale avant exécution pour vérifier la construction correcte de l'URL
-      console.log('URL appelée :', url);
+    // Reformater la réponse pour le front-end
+    return res.status(200).json({
+      code: response.data.code || 200,
+      data: response.data.data,
+      details: response.data.details || `Fichier supprimé avec succès`,
+      message: response.data.message || "OK",
+    });
 
-      // Effectuer la requête POST avec Axios
-      const response = await axios.post(url, form, { headers });
+  } catch (error) {
+    console.error(" Erreur suppression :", error.response?.data || error.message);
+    return res.status(500).json({
+      message: "Erreur lors de la suppression du document",
+      error: error.response?.data || error.message,
+    });
+  }
+};
 
-      // Vérifier la réponse du serveur
-      if (response.status === 200) {
-        const data = response.data;
 
-        // Log de la réponse complète pour vérification
-        console.log('Réponse de l\'upload:', data);
+// ==============================================
+// RÉCUPÉRER LE CONTENU D'UN DOCUMENT PAR NODEID
+// ==============================================
+exports.getDocumentContent = async (req, res) => {
+  try {
+    const { nodeId } = req.params;
 
-        if (data.status === 'success') {
-          const fileInfo = data.files[0];  // Récupérer les informations du fichier téléchargé
-          console.log('Fichier uploadé avec succès:', fileInfo);
+    //  URL complète du contenu du document Alfresco
+    const url = `${WS_METIER_URL}/alfresco/service/api/node/content/workspace/SpacesStore/${nodeId}`;
 
-          return {
-            message: 'Fichier uploadé avec succès',
-            fileInfo,
-          };
-        } else {
-          console.error('Erreur dans la réponse de l\'upload:', data);
-          return { error: 'Le fichier n\'a pas pu être téléchargé correctement' };
-        }
-      } else {
-        console.error('Erreur lors de l\'upload du fichier');
-        return { error: 'Erreur lors de l\'upload du fichier' };
+    //  Requête HTTP GET avec authentification Basic
+    const response = await axios.get(url, {
+      responseType: 'arraybuffer', // Pour recevoir du binaire
+      headers: {
+        'Authorization': `Basic ${Buffer.from(`${ALFRESCO_USERNAME}:${ALFRESCO_PASSWORD}`).toString('base64')}`
       }
-    } catch (error) {
-      // Gestion des erreurs
-      console.error('Erreur lors de l\'upload du fichier:', error.message);
-      return { error: 'Une erreur est survenue lors de l\'upload', details: error.message };
-    }
-  };
+    });
 
-  // // ==============================================
-  // // 🧩 2️⃣ ASSOCIATION DU DOCUMENT À UN OBJET
-  // // ==============================================
-  // exports.associateDocument = async (req, res) => {
-  //   try {
-  //     const {
-  //       raisonSociale, contactPrincipal, emailProfessionnel,
-  //       telephone, adresseSiegeSocial, codePostal, ifu,
-  //       secteurActivite, chiffreAffaires, nombreEmployes,
-  //       typeCreancier, delaiPaiementHabituel, assuranceCredit,
-  //       commentaires, documentIdentite
-  //     } = req.body;
+    // Transmet directement le fichier téléchargé avec le bon type MIME
+    res.setHeader('Content-Type', response.headers['content-type']);
+    res.send(response.data);
 
-  //     const dateNow = new Date().toISOString().replace('T', ' ').substring(0, 19);
-  //     const objetId = `cedant-admin-portail-recouvrement-${dateNow.replace(/[-:\s]/g, '')}`;
-
-  //     const responseData = {
-  //       code: 200,
-  //       data: {
-  //         map: {
-  //           dateCreation: dateNow,
-  //           createurUsername: "admin",
-  //           raisonSociale,
-  //           contactPrincipal,
-  //           emailProfessionnel,
-  //           telephone,
-  //           adresseSiegeSocial,
-  //           codePostal,
-  //           ifu,
-  //           secteurActivite,
-  //           chiffreAffaires,
-  //           nombreEmployes,
-  //           typeCreancier,
-  //           delaiPaiementHabituel,
-  //           assuranceCredit,
-  //           commentaires,
-  //           typeObjet: "cedant",
-  //           statutGlobal: "NOUVEAU",
-  //           objetId,
-  //           documentIdentite: {
-  //             titre: documentIdentite?.titre || "",
-  //             typeDocument: documentIdentite?.typeDocument || "",
-  //             documentNodeId: documentIdentite?.documentNodeId,
-  //             fileName: documentIdentite?.fileName,
-  //             fileExtension: documentIdentite?.fileName?.split('.').pop() || "",
-  //           },
-  //         },
-  //       },
-  //       details: "Record successfully created",
-  //       message: "OK",
-  //     };
-
-  //     return res.status(200).json(responseData);
-
-  //   } catch (error) {
-  //     console.error("❌ Erreur association :", error);
-  //     return res.status(500).json({
-  //       message: "Erreur lors de l'association du document",p
-  //       error: error.message,
-  //     });
-  //   }
-  // };
-
-  // ==============================================
-  // 📄 3️⃣ RÉCUPÉRER LE CONTENU D'UN DOCUMENT PAR NODEID
-  // ==============================================
-  exports.getDocumentContent = async (req, res) => {
-    try {
-      const { nodeId } = req.params;
-
-      // 🔗 URL complète du contenu du document Alfresco
-      const url = `${WS_METIER_URL}/alfresco/service/api/node/content/workspace/SpacesStore/${nodeId}`;
-
-      // 📡 Requête HTTP GET avec authentification Basic
-      const response = await axios.get(url, {
-        responseType: 'arraybuffer', // Pour recevoir du binaire
-        headers: {
-          'Authorization': `Basic ${Buffer.from(`${ALFRESCO_USERNAME}:${ALFRESCO_PASSWORD}`).toString('base64')}`
-        }
-      });
-
-      // 🔄 Transmet directement le fichier téléchargé avec le bon type MIME
-      res.setHeader('Content-Type', response.headers['content-type']);
-      res.send(response.data);
-
-    } catch (error) {
-      console.error("❌ Erreur récupération contenu :", error.response?.data || error.message);
-      res.status(500).json({
-        message: "Erreur lors de la récupération du contenu du document",
-        error: error.response?.data || error.message,
-      });
-    }
-  };
+  } catch (error) {
+    console.error(" Erreur récupération contenu :", error.response?.data || error.message);
+    res.status(500).json({
+      message: "Erreur lors de la récupération du contenu du document",
+      error: error.response?.data || error.message,
+    });
+  }
+};
