@@ -17,7 +17,6 @@ const config = {
 
 // Inscription
 // Mise à jour de la fonction register dans auth.controller.js
-// Mise à jour de la fonction register dans auth.controller.js
 
 exports.register = async (req, res) => {
   const { username, email, nodeId, firstName, lastName, role } = req.body;
