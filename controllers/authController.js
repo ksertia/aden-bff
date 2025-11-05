@@ -13,10 +13,10 @@ const config = {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   }
+
 };
 
 // Inscription
-// Mise à jour de la fonction register dans auth.controller.js
 // Mise à jour de la fonction register dans auth.controller.js
 
 exports.register = async (req, res) => {
