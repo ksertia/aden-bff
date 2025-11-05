@@ -130,9 +130,6 @@ exports.uploadDocument = async (req, res) => {
   }
 };
 
-
-
-
 // ==============================================
 //  SUPPRESSION D'UN DOCUMENT DANS ALFRESCO
 // ==============================================
