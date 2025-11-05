@@ -26,7 +26,7 @@ app.use(cors());
 app.get('/health', (req, res) => res.json({ status: 'OK', message: 'BFF is running smoothly' }));
 
 // Auth routes
-app.use('/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 
 // Debiteur routes
 app.use('/api', debiteurRoutes);
