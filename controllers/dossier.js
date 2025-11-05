@@ -1,4 +1,5 @@
 const axios = require('axios');
+const FormData = require('form-data');
 
 // Informations d'authentification pour l'API de récupération des débiteurs
 const username = 'admin';  // Exemple : admin
