@@ -27,6 +27,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// ✅ Fix du problème de pré-flight (OPTIONS)
+app.options('*', cors());
+
 /* app.use(cors({
   origin: (origin, callback) => {
     if (!origin || ['http://localhost:4200', 'https://ton-domaine-front.vercel.app'].includes(origin)) {
