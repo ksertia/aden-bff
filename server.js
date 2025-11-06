@@ -22,7 +22,7 @@ const app = express();
 app.use(express.json());
 //app.use(cors());
 app.use(cors({
-  origin: ['http://localhost:4200', 'https://aden-portal-git-deploy-kconstants-projects.vercel.app'],
+  origin: ['http://localhost:4200', 'https://aden-portal.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
