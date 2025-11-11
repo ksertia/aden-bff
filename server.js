@@ -20,7 +20,23 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+//app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:4200', 'https://aden-portal.vercel.app'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+/* app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || ['http://localhost:4200', 'https://ton-domaine-front.vercel.app'].includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed'));
+    }
+  },
+  credentials: true
+})); */
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'OK', message: 'BFF is running smoothly' }));
@@ -52,7 +68,8 @@ app.use('/api', adminRoutes);
 app.use('/api', dossierRoutes);
 
 app.use('/api', documentRoutes);
-app.use('/api', documentRoutes);
+
+app.use('/api/documents', documentRoutes);
 
 
 // Global error handler
