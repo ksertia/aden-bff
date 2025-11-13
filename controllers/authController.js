@@ -228,6 +228,7 @@ exports.getUserByEmail = async (req, res) => {
       }
     );
 
+
     // Strapi retourne un tableau, on prend le premier résultat
     const users = response.data;
     
@@ -263,3 +264,199 @@ exports.getUserByEmail = async (req, res) => {
     });
   }
 };
+
+// ======================= CHANGE PASSWORD =======================
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, password, passwordConfirmation } = req.body;
+
+    // Validation des champs
+    if (!currentPassword || !password || !passwordConfirmation) {
+      return res.status(400).json({ 
+        message: 'Tous les champs sont requis (currentPassword, password, passwordConfirmation)' 
+      });
+    }
+
+    // Vérification que les mots de passe correspondent
+    if (password !== passwordConfirmation) {
+      return res.status(400).json({ 
+        message: 'La confirmation du mot de passe ne correspond pas' 
+      });
+    }
+
+    // Validation de la complexité du mot de passe (optionnel mais recommandé)
+    if (password.length < 8) {
+      return res.status(400).json({ 
+        message: 'Le mot de passe doit contenir au moins 8 caractères' 
+      });
+    }
+
+    // Récupération du token JWT (fourni par authMiddleware dans req.user ou req.headers)
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token non fourni' });
+    }
+
+    console.log('🔄 Changement de mot de passe pour l\'utilisateur:', req.user?.email || 'inconnu');
+    
+    // Appel à l'API Strapi pour changer le mot de passe
+    const response = await axios.post(
+      `${process.env.STRAPI_URL}/api/auth/change-password`,
+      {
+        currentPassword,
+        password,
+        passwordConfirmation,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log('✅ Mot de passe changé avec succès');
+
+    res.status(200).json({
+      message: 'Mot de passe changé avec succès',
+      user: response.data.user, // Strapi retourne les infos utilisateur
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur changement mot de passe:', error.response?.data || error.message);
+    
+    // Gestion des erreurs spécifiques de Strapi
+    if (error.response?.status === 400) {
+      return res.status(400).json({
+        message: 'Mot de passe actuel incorrect',
+        error: error.response.data.error?.message || 'Validation échouée',
+      });
+    }
+
+    res.status(error.response?.status || 500).json({
+      message: 'Erreur lors du changement de mot de passe',
+      error: error.response?.data?.error?.message || error.message,
+    });
+  }
+};
+
+
+
+// ======================= UPDATE USER INFO =======================
+exports.updateUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const updateData = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: "L'ID de l'utilisateur est requis" });
+    }
+
+    // Récupération du JWT et de l'utilisateur connecté
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token non fourni' });
+    }
+
+    // 🔒 SÉCURITÉ : Vérifier que l'utilisateur modifie son propre profil
+    // ou qu'il a les droits admin
+    const currentUserId = req.user?.id; // fourni par authMiddleware
+    const userRole = req.user?.role?.name;
+
+    if (!currentUserId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    // Autoriser uniquement si :
+    // 1. L'utilisateur modifie son propre profil (userId == currentUserId)
+    // 2. OU l'utilisateur a le rôle Admin/Super Admin
+    const isOwnProfile = String(userId) === String(currentUserId);
+    const isAdmin = ['Admin', 'Super Admin', 'Administrateur'].includes(userRole);
+
+    if (!isOwnProfile && !isAdmin) {
+      return res.status(403).json({ 
+        message: 'Accès refusé : vous ne pouvez modifier que votre propre profil' 
+      });
+    }
+
+    // 🔒 Empêcher la modification de certains champs sensibles (sauf admin)
+    const forbiddenFields = ['password', 'role', 'confirmed', 'blocked'];
+    if (!isAdmin) {
+      forbiddenFields.forEach(field => {
+        if (updateData[field]) {
+          delete updateData[field];
+          console.warn(`⚠️ Tentative de modification du champ protégé : ${field}`);
+        }
+      });
+    }
+
+    console.log('🔄 Mise à jour utilisateur ID:', userId);
+    console.log('📝 Données à mettre à jour:', updateData);
+
+    // Appel Strapi : PUT /api/users/:id
+    const response = await axios.put(
+      `${process.env.STRAPI_URL}/api/users/${userId}`,
+      updateData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log('✅ Utilisateur mis à jour avec succès');
+
+    res.status(200).json({
+      message: 'Informations utilisateur mises à jour avec succès',
+      user: response.data,
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur mise à jour utilisateur:', error.response?.data || error.message);
+    
+    // Gestion des erreurs spécifiques
+    if (error.response?.status === 404) {
+      return res.status(404).json({
+        message: 'Utilisateur introuvable',
+      });
+    }
+
+    res.status(error.response?.status || 500).json({
+      message: "Erreur lors de la mise à jour de l'utilisateur",
+      error: error.response?.data?.error?.message || error.message,
+    });
+  }
+};
+
+// ======================= GET ME (Récupérer infos utilisateur connecté) =======================
+exports.getMe = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token non fourni' });
+    }
+
+    // Appel à Strapi pour récupérer l'utilisateur avec toutes ses relations
+    const response = await axios.get(
+      `${process.env.STRAPI_URL}/api/users/me?populate=role`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    res.status(200).json({
+      user: response.data,
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur récupération profil:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: 'Erreur lors de la récupération du profil',
+      error: error.response?.data || error.message,
+    });
+  }
+};
+
