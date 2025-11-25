@@ -17,11 +17,11 @@ const config = {
 // Récupérer les Créanciers
 exports.getCreanciers = async (req, res) => {
   const { sitename } = req.params;  // Récupérer le sitename à partir des paramètres de l'URL
-  const baseUrl = 'http://54.38.55.19:8181/alfresco/s/ged/search-objets';  // Base URL de l'API
+  // const baseUrl = 'http://54.38.55.19:8181/alfresco/s/ged/search-objets';  // Base URL de l'API
 
   try {
     // Construire l'URL de l'API avec le sitename (ex: "portail-recouvrement")
-    const url = `${baseUrl}/${sitename}/creancier`;
+    const url = `${process.env.baseUrl}/${sitename}/creancier`;
 
     // Effectuer la requête GET avec Axios, en ajoutant les headers nécessaires
     const response = await axios.get(url, config);
