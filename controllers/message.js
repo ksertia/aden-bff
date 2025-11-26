@@ -24,7 +24,7 @@ exports.createMessage = async (req, res) => {
   try {
     // Données venant du client (body)
     const {
-      nodeId,
+    //   nodeId,
       objet,
       contenu,
       statut,
@@ -35,7 +35,7 @@ exports.createMessage = async (req, res) => {
 
     // Construction du payload
     const messagePayload = {
-      nodeId,
+    //   nodeId,
       objet,
       contenu,
       statut,

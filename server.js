@@ -11,6 +11,7 @@ const cedantRoutes = require('./routes/cedantRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const dossierRoutes = require('./routes/dossierRoutes');
 const documentRoutes = require('./routes/documentRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 
 
@@ -64,6 +65,9 @@ app.use('/api', avocatRoutes);
 app.use('/api', cedantRoutes);
 // admin routes
 app.use('/api', adminRoutes);
+
+// message routes
+app.use('/api', messageRoutes);
 
 // dossier routes
 app.use('/api', dossierRoutes);
