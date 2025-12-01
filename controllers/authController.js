@@ -315,7 +315,7 @@ exports.changePassword = async (req, res) => {
       }
     );
 
-    console.log('✅ Mot de passe changé avec succès');
+    console.log(' Mot de passe changé avec succès');
 
     res.status(200).json({
       message: 'Mot de passe changé avec succès',
@@ -323,7 +323,7 @@ exports.changePassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erreur changement mot de passe:', error.response?.data || error.message);
+    console.error(' Erreur changement mot de passe:', error.response?.data || error.message);
     
     // Gestion des erreurs spécifiques de Strapi
     if (error.response?.status === 400) {
@@ -358,7 +358,7 @@ exports.updateUser = async (req, res) => {
       return res.status(401).json({ message: 'Token non fourni' });
     }
 
-    // 🔒 SÉCURITÉ : Vérifier que l'utilisateur modifie son propre profil
+    //  SÉCURITÉ : Vérifier que l'utilisateur modifie son propre profil
     // ou qu'il a les droits admin
     const currentUserId = req.user?.id; // fourni par authMiddleware
     const userRole = req.user?.role?.name;
@@ -379,19 +379,19 @@ exports.updateUser = async (req, res) => {
       });
     }
 
-    // 🔒 Empêcher la modification de certains champs sensibles (sauf admin)
+    //  Empêcher la modification de certains champs sensibles (sauf admin)
     const forbiddenFields = ['password', 'role', 'confirmed', 'blocked'];
     if (!isAdmin) {
       forbiddenFields.forEach(field => {
         if (updateData[field]) {
           delete updateData[field];
-          console.warn(`⚠️ Tentative de modification du champ protégé : ${field}`);
+          console.warn(` Tentative de modification du champ protégé : ${field}`);
         }
       });
     }
 
-    console.log('🔄 Mise à jour utilisateur ID:', userId);
-    console.log('📝 Données à mettre à jour:', updateData);
+    console.log('Mise à jour utilisateur ID:', userId);
+    console.log('Données à mettre à jour:', updateData);
 
     // Appel Strapi : PUT /api/users/:id
     const response = await axios.put(
@@ -405,7 +405,7 @@ exports.updateUser = async (req, res) => {
       }
     );
 
-    console.log('✅ Utilisateur mis à jour avec succès');
+    console.log('Utilisateur mis à jour avec succès');
 
     res.status(200).json({
       message: 'Informations utilisateur mises à jour avec succès',
@@ -413,7 +413,7 @@ exports.updateUser = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erreur mise à jour utilisateur:', error.response?.data || error.message);
+    console.error(' Erreur mise à jour utilisateur:', error.response?.data || error.message);
     
     // Gestion des erreurs spécifiques
     if (error.response?.status === 404) {
@@ -428,6 +428,129 @@ exports.updateUser = async (req, res) => {
     });
   }
 };
+
+// ======================= UPLOAD AVATAR =======================
+exports.uploadAvatar = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    if (!userId) {
+      return res.status(400).json({ message: "L'ID de l'utilisateur est requis" });
+    }
+
+    // Vérification du fichier
+    if (!req.file) {
+      return res.status(400).json({ message: 'Aucun fichier fourni' });
+    }
+
+    // Récupération du JWT et de l'utilisateur connecté
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token non fourni' });
+    }
+
+    const currentUserId = req.user?.id;
+    const userRole = req.user?.role?.name;
+
+    if (!currentUserId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    // Autoriser uniquement si l'utilisateur modifie son propre profil ou est admin
+    const isOwnProfile = String(userId) === String(currentUserId);
+    const isAdmin = ['Admin', 'Super Admin', 'Administrateur'].includes(userRole);
+
+    if (!isOwnProfile && !isAdmin) {
+      return res.status(403).json({ 
+        message: 'Accès refusé : vous ne pouvez modifier que votre propre profil' 
+      });
+    }
+
+    console.log('Upload photo de profil pour utilisateur ID:', userId);
+    console.log('Fichier reçu:', {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size
+    });
+
+    // Création du FormData pour Strapi
+    const FormData = require('form-data');
+    const formData = new FormData();
+    
+    // Ajout du fichier
+    formData.append('files', req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype
+    });
+
+    // Étape 1: Upload du fichier vers Strapi
+    const uploadResponse = await axios.post(
+      `${process.env.STRAPI_URL}/api/upload`,
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const uploadedFile = uploadResponse.data[0];
+    console.log('Fichier uploadé sur Strapi:', uploadedFile.id);
+
+    // Étape 2: Associer l'image au champ 'profil' de l'utilisateur
+    const updateResponse = await axios.put(
+      `${process.env.STRAPI_URL}/api/users/${userId}`,
+      {
+        profil: uploadedFile.id
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    // Étape 3: Récupérer l'utilisateur avec le champ profil populé
+    const userResponse = await axios.get(
+      `${process.env.STRAPI_URL}/api/users/${userId}?populate=profil`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const user = userResponse.data;
+
+    // Construire l'URL complète de la photo de profil
+    if (user.profil) {
+      user.profil = `${process.env.STRAPI_URL}${user.profil.url}`;
+    }
+
+    console.log(' Photo de profil mise à jour avec succès');
+
+    res.status(200).json({
+      message: 'Photo de profil mise à jour avec succès',
+      user: user,
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur upload photo de profil:', error.response?.data || error.message);
+    
+    if (error.response?.status === 404) {
+      return res.status(404).json({
+        message: 'Utilisateur introuvable',
+      });
+    }
+
+    res.status(error.response?.status || 500).json({
+      message: "Erreur lors de l'upload de la photo de profil",
+      error: error.response?.data?.error?.message || error.message,
+    });
+  }
+};
+
 
 // ======================= GET ME (Récupérer infos utilisateur connecté) =======================
 exports.getMe = async (req, res) => {
@@ -458,5 +581,6 @@ exports.getMe = async (req, res) => {
       error: error.response?.data || error.message,
     });
   }
+
 };
 
